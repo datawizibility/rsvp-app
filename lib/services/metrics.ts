@@ -3,7 +3,19 @@ export type RsvpStatusValue = "yes" | "maybe" | "no";
 export type MetricGuest = {
   isVip: boolean;
   functions: string[];
-  rsvp: { status: RsvpStatusValue; functions: string[] } | null;
+  rsvp: {
+    status: RsvpStatusValue;
+    functions: string[];
+    adults: number;
+    children: number;
+  } | null;
+};
+
+export type FunctionMetric = {
+  guests: number;
+  people: number;
+  tentativeGuests: number;
+  tentativePeople: number;
 };
 
 export type EventMetrics = {
@@ -16,29 +28,55 @@ export type EventMetrics = {
   pending: number;
   vipTotal: number;
   vipConfirmed: number;
-  perFunction: Record<string, number>;
+  confirmedPeople: number;
+  tentativePeople: number;
+  perFunction: Record<string, FunctionMetric>;
 };
+
+function emptyFunctionMetric(): FunctionMetric {
+  return { guests: 0, people: 0, tentativeGuests: 0, tentativePeople: 0 };
+}
 
 export function computeEventMetrics(
   guests: MetricGuest[],
   openedCount = 0,
 ): EventMetrics {
-  const perFunction: Record<string, number> = {};
+  const perFunction: Record<string, FunctionMetric> = {};
   let confirmed = 0;
   let maybe = 0;
   let declined = 0;
   let vipConfirmed = 0;
+  let confirmedPeople = 0;
+  let tentativePeople = 0;
 
   for (const guest of guests) {
     if (guest.isVip && guest.rsvp?.status === "yes") vipConfirmed++;
     if (!guest.rsvp) continue;
 
-    if (guest.rsvp.status === "yes") confirmed++;
-    else if (guest.rsvp.status === "maybe") maybe++;
-    else declined++;
+    const { status, functions, adults, children } = guest.rsvp;
+    const headcount = adults + children;
 
-    for (const fn of guest.rsvp.functions) {
-      perFunction[fn] = (perFunction[fn] ?? 0) + 1;
+    if (status === "yes") {
+      confirmed++;
+      confirmedPeople += headcount;
+    } else if (status === "maybe") {
+      maybe++;
+      tentativePeople += headcount;
+    } else {
+      declined++;
+    }
+
+    if (status === "no") continue;
+
+    for (const fn of functions) {
+      const metric = (perFunction[fn] ??= emptyFunctionMetric());
+      if (status === "yes") {
+        metric.guests++;
+        metric.people += headcount;
+      } else {
+        metric.tentativeGuests++;
+        metric.tentativePeople += headcount;
+      }
     }
   }
 
@@ -54,6 +92,8 @@ export function computeEventMetrics(
     pending: guests.length - responded,
     vipTotal: guests.filter((g) => g.isVip).length,
     vipConfirmed,
+    confirmedPeople,
+    tentativePeople,
     perFunction,
   };
 }

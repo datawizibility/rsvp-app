@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RSVP App — Complete Guide</title>
+<style>
+  :root {
+    --bg:#f7f8fb; --surface:#fff; --ink:#0f172a; --muted:#5b6478; --line:#e5e8ef;
+    --brand:#4f46e5; --brand-soft:#eef2ff; --green:#16a34a; --green-soft:#ecfdf3;
+    --amber:#b45309; --amber-soft:#fffbeb; --red:#dc2626; --red-soft:#fef2f2;
+    --blue:#0369a1; --blue-soft:#eff6ff; --code-bg:#0b1220; --code-ink:#e6edf6;
+    --radius:14px; --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:16px}
+  a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
+  code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .wrap{display:grid;grid-template-columns:280px minmax(0,1fr);gap:32px;max-width:1240px;margin:0 auto;padding:0 24px 96px}
+  @media(max-width:960px){.wrap{grid-template-columns:1fr}.toc{position:static!important;max-height:none!important}}
+  .toc{position:sticky;top:24px;align-self:start;max-height:calc(100vh - 48px);overflow:auto;padding:20px;margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+  .toc h4{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .toc a{display:block;padding:5px 8px;border-radius:8px;color:var(--ink);font-size:14px}
+  .toc a:hover{background:var(--brand-soft);text-decoration:none}
+  .hero{padding:56px 0 24px}
+  .badge{display:inline-block;background:var(--brand-soft);color:var(--brand);font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;border-radius:999px}
+  .hero h1{font-size:clamp(30px,4vw,46px);line-height:1.15;margin:16px 0 12px;letter-spacing:-.02em}
+  .hero p.lead{font-size:18px;color:var(--muted);max-width:760px;margin:0}
+  .meta{margin-top:18px;color:var(--muted);font-size:14px;display:flex;gap:18px;flex-wrap:wrap}
+  section{scroll-margin-top:20px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin:18px 0}
+  h2{font-size:26px;letter-spacing:-.01em;margin:40px 0 6px;padding-top:8px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;margin-right:10px;border-radius:10px;background:var(--brand);color:#fff;font-size:15px;vertical-align:middle}
+  h3{font-size:19px;margin:26px 0 8px} h4{font-size:16px;margin:18px 0 6px}
+  p{margin:10px 0} ul,ol{margin:10px 0;padding-left:22px} li{margin:5px 0}
+  .code{position:relative;margin:12px 0}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:12px;overflow:auto;font-size:13.5px;line-height:1.6;margin:0}
+  pre .c{color:#7d8aa0} pre .k{color:#93c5fd} pre .s{color:#86efac}
+  .copy{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.1);color:#cbd5e1;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .copy:hover{background:rgba(255,255,255,.2)} .copy.ok{background:#16a34a;border-color:#16a34a;color:#fff}
+  kbd{background:#eef1f6;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px;font-size:12.5px}
+  .inline{background:var(--brand-soft);color:var(--brand);border-radius:6px;padding:1px 6px;font-size:13.5px}
+  .callout{border-left:4px solid;border-radius:10px;padding:14px 16px;margin:16px 0}
+  .callout strong{display:block;margin-bottom:2px}
+  .tip{background:var(--green-soft);border-color:var(--green)} .tip strong{color:var(--green)}
+  .warn{background:var(--amber-soft);border-color:var(--amber)} .warn strong{color:var(--amber)}
+  .danger{background:var(--red-soft);border-color:var(--red)} .danger strong{color:var(--red)}
+  .note{background:var(--blue-soft);border-color:var(--blue)} .note strong{color:var(--blue)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f2f4f9;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  tr:hover td{background:#fafbff}
+  figure{margin:20px 0} figcaption{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
+  .fig{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;overflow:auto}
+  .fig svg{display:block;width:100%;height:auto}
+  .steps{counter-reset:step;list-style:none;padding:0}
+  .steps>li{position:relative;padding:0 0 4px 46px;margin:18px 0}
+  .steps>li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  details{border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+  summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+  summary::-webkit-details-marker{display:none} summary::after{content:"+";color:var(--muted);font-weight:400}
+  details[open] summary::after{content:"–"} details .body{padding:0 16px 14px;border-top:1px solid var(--line)}
+  .check{list-style:none;padding:0}
+  .check li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .check li::before{content:"";flex:0 0 18px;height:18px;margin-top:3px;border:2px solid var(--line);border-radius:5px}
+  .pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;background:#eef1f6;color:var(--muted);font-weight:600}
+  .pill.free{background:var(--green-soft);color:var(--green)} .pill.new{background:var(--brand-soft);color:var(--brand)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+  footer{color:var(--muted);font-size:14px;text-align:center;padding:40px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#what">What is RSVP App</a>
+    <a href="#users">Who it's for</a>
+    <a href="#tour">Feature tour</a>
+    <a href="#concepts">Core concepts</a>
+    <a href="#data">Data model</a>
+    <a href="#flows">User flows</a>
+    <a href="#routes">Screens &amp; routes</a>
+    <a href="#stack">Architecture</a>
+    <a href="#setup">Local setup</a>
+    <a href="#demo">Demo tour</a>
+    <a href="#testing">Testing</a>
+    <a href="#deploy">Deployment</a>
+    <a href="#structure">Project structure</a>
+    <a href="#faq">FAQ</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <span class="badge">Product &amp; Developer Guide</span>
+      <h1>RSVP App</h1>
+      <p class="lead">One platform to <strong>invite, manage and host</strong> an event — a universal Event + Contact + Guest + Invitation + RSVP engine, demonstrated through a wedding.</p>
+      <div class="meta">
+        <span>🎯 Build #1 — the core loop</span>
+        <span>🧱 Next.js · Prisma · Postgres</span>
+        <span>✅ 22 unit + 2 e2e tests</span>
+      </div>
+    </header>
+
+    <div class="callout note">
+      <strong>This guide has two audiences</strong>
+      Product owners can read <em>What is RSVP App</em> through <em>Demo tour</em>. Developers can jump to <em>Data model</em>, <em>Architecture</em>, <em>Local setup</em> and <em>Testing</em>.
+    </div>
+
+    <!-- WHAT -->
+    <section id="what">
+      <h2>What is RSVP App</h2>
+      <div class="card">
+        <p>Most invitation tools stop at a pretty page. RSVP App starts there and keeps going — it owns the <strong>whole guest journey</strong>: build the invitation, import the guest list, send personal links, collect RSVPs, and watch it all on a live dashboard.</p>
+        <p>It is deliberately built as an <strong>engine, not a wedding app</strong>. A wedding is the first experience; investor meets, conferences, birthdays and corporate events are <em>configuration</em>, not new products.</p>
+        <h4>The positioning</h4>
+        <p class="inline" style="display:inline-block;padding:8px 14px;font-size:15px">Create. Invite. RSVP. Manage.</p>
+        <div class="callout tip">
+          <strong>The moat is not templates</strong>
+          Templates and pretty designs get copied. The durable value is the <strong>guest data + event history + workflow + communication</strong>. Own the guest, and switching cost grows with every event.
+        </div>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section id="users">
+      <h2>Who it's for</h2>
+      <div class="grid2">
+        <div class="card">
+          <h4>🧑‍🤝‍🧑 Individual organiser</h4>
+          <p>A family hosting a wedding. Needs to create an invitation, upload a guest list, send it out, track who's coming, and manage several functions (Mehendi, Sangeet, Wedding, Reception).</p>
+        </div>
+        <div class="card">
+          <h4>🏢 Corporate organiser</h4>
+          <p>A company running an investor meet. Needs a branded event page, an agenda, VIP tracking, custom questions ("Would you like a meeting with management?"), and analytics.</p>
+        </div>
+      </div>
+      <div class="callout note">
+        <strong>Both run on the same engine</strong>
+        There is no <code>WeddingGuest</code> vs <code>InvestorGuest</code> table. One <code>Contact</code> + one <code>EventGuest</code> serves every vertical. A test proves the investor case works with <em>zero schema change</em>.
+      </div>
+    </section>
+
+    <!-- TOUR -->
+    <section id="tour">
+      <h2>Feature tour</h2>
+
+      <h3>Accounts &amp; workspaces</h3>
+      <ul>
+        <li>Email + password sign-up; a personal <strong>workspace</strong> is created automatically.</li>
+        <li>The workspace is the tenancy boundary — it's what lets a wedding user later become a corporate or agency user without a new account.</li>
+      </ul>
+
+      <h3>Events &amp; functions</h3>
+      <ul>
+        <li>Create an event with type, dates, city, venue, host and contact.</li>
+        <li>Add unlimited <strong>functions</strong> — each with date, times, venue, dress code, capacity and whether RSVP is required.</li>
+        <li>Event lifecycle status: <span class="pill">draft</span> <span class="pill">published</span> <span class="pill">completed</span> <span class="pill">archived</span>.</li>
+      </ul>
+
+      <h3>Invitation builder</h3>
+      <ul>
+        <li>Two templates — <strong>Royal</strong> (ornate, gold, serif) and <strong>Minimal</strong> (clean, image-forward).</li>
+        <li>Editable content: headline, welcome, about, host message, venue note, RSVP message.</li>
+        <li>Toggle 13 sections on/off: welcome, about, functions, gallery, venue, directions, dress code, accommodation, travel, RSVP, contact, gift registry, agenda.</li>
+        <li>Upload a cover image and a gallery.</li>
+        <li><strong>Live preview</strong> while you edit; one-click <strong>Publish</strong> (increments a version and flips the event to published).</li>
+      </ul>
+
+      <h3>Guest management</h3>
+      <ul>
+        <li>Add guests manually, or import via a <strong>guided CSV wizard</strong>.</li>
+        <li>Custom per-event <strong>groups</strong> (Bride Family, Friends, VIP, Investors, Media…).</li>
+        <li><strong>VIP</strong> flag and party size per guest, per event.</li>
+        <li>Each guest gets a unique, non-enumerable <strong>personal link</strong>.</li>
+      </ul>
+
+      <h3>CSV import wizard</h3>
+      <p>Upload → detect columns → map → validate → detect duplicates → preview → import. It recognises messy headers (e.g. <code>Mob No</code> → mobile, <code>Company</code> → organisation) and reports "487 records: 451 ready, 28 need review, 8 duplicates".</p>
+
+      <h3>Personalised invitation &amp; RSVP</h3>
+      <ul>
+        <li>Guests open <code>/e/&lt;event&gt;/&lt;token&gt;</code> and see their own name, VIP badge and function list.</li>
+        <li>RSVP: Yes / Maybe / No, adult + child counts, per-function attendance, dietary preference, accommodation &amp; travel needs, and custom questions.</li>
+        <li>Re-submitting updates the response (latest wins).</li>
+      </ul>
+
+      <h3>Dashboard &amp; metrics</h3>
+      <ul>
+        <li>Invited · Opened · Responded · Confirmed · Maybe · Declined · Pending.</li>
+        <li>VIP confirmed / VIP total, and attendance <strong>by function</strong>.</li>
+        <li>Workspace summary: events, contacts, confirmed guests.</li>
+      </ul>
+
+      <div class="callout tip">
+        <strong>Share without an API</strong>
+        In this build, sending is a personal link you copy or a <code>wa.me</code> WhatsApp deep link. Automated WhatsApp Business messaging is a later subsystem.
+      </div>
+    </section>
+
+    <!-- CONCEPTS -->
+    <section id="concepts">
+      <h2>Core concepts</h2>
+
+      <h3>Contact vs EventGuest <span class="pill new">the key idea</span></h3>
+      <p>There are two different things people confuse:</p>
+      <div class="grid2">
+        <div class="card">
+          <h4>Contact <span class="pill">workspace-level</span></h4>
+          <p>Who the person <em>is</em>. One record per person for the whole workspace — name, mobile, email, organisation, designation, city. Deduplicated by normalised mobile number.</p>
+        </div>
+        <div class="card">
+          <h4>EventGuest <span class="pill">event-level</span></h4>
+          <p>Their <em>participation</em> in one event — group, VIP flag, party size, and the personal invitation token. A person has one EventGuest per event they attend.</p>
+        </div>
+      </div>
+      <p>So Raj Mehta of ABC Capital is <strong>one Contact</strong>, and a separate <strong>EventGuest</strong> at Investor Meet 2026, the AGM, and next year's meet. That's what turns a guest list into a CRM over time.</p>
+      <div class="callout note">
+        <strong>The invitation token lives on EventGuest, not Contact</strong>
+        The same person can be a VIP at one event and an ordinary guest at another, with a different party size. The token must be per-event.
+      </div>
+
+      <h3>Personalised links</h3>
+      <p>The invitation page is <strong>shared</strong>; the guest-specific parts are overlaid at render time.</p>
+      <div class="code">
+        <button class="copy">Copy</button>
+        <pre>https://your-app.vercel.app/e/rahul-neha-wedding/7H82KQ9M2PX4T8VW3N6BZ1LD5R</pre>
+      </div>
+      <p>Tokens are 26-character base32 (~130 bits) so they can't be guessed or enumerated.</p>
+
+      <h3>Verticals are configuration</h3>
+      <p>Wedding dietary preference, investor meeting requests, conference sessions — all live in generic <code>EventQuestion</code> / <code>RsvpAnswer</code> rows and JSON custom fields. Adding a vertical means adding questions, not tables.</p>
+    </section>
+
+    <!-- DATA MODEL -->
+    <section id="data">
+      <h2>Data model</h2>
+      <p>Thirteen tables. The relationships are deliberately simple: everything hangs off a Workspace, and guests hang off Events.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 900 470" role="img" aria-label="Entity relationship diagram">
+            <defs>
+              <style>
+                .ent{fill:#fff;stroke:#cbd5e1;stroke-width:1.4;rx:10}
+                .entkey{fill:#eef2ff;stroke:#6366f1;stroke-width:1.6;rx:10}
+                .n{font:600 13px -apple-system,Segoe UI,sans-serif;fill:#0f172a}
+                .f{font:400 11.5px ui-monospace,monospace;fill:#64748b}
+                .rel{stroke:#94a3b8;stroke-width:1.5;fill:none}
+                .rl{font:400 10.5px -apple-system,Segoe UI,sans-serif;fill:#94a3b8}
+              </style>
+            </defs>
+
+            <!-- Column 1 -->
+            <rect class="entkey" x="20" y="30" width="180" height="58"/>
+            <text class="n" x="34" y="54">User</text>
+            <text class="f" x="34" y="74">email · passwordHash</text>
+
+            <rect class="entkey" x="20" y="130" width="180" height="74"/>
+            <text class="n" x="34" y="154">Workspace</text>
+            <text class="f" x="34" y="174">name · ownerId</text>
+            <text class="f" x="34" y="190">the tenancy boundary</text>
+
+            <path class="rel" d="M110,88 L110,130"/><text class="rl" x="116" y="112">owns</text>
+
+            <!-- Column 2 -->
+            <rect class="ent" x="300" y="30" width="200" height="74"/>
+            <text class="n" x="314" y="54">Contact</text>
+            <text class="f" x="314" y="74">name · mobileNormalized</text>
+            <text class="f" x="314" y="90">organisation · designation</text>
+
+            <rect class="entkey" x="300" y="160" width="200" height="90"/>
+            <text class="n" x="314" y="184">Event</text>
+            <text class="f" x="314" y="204">name · type · status</text>
+            <text class="f" x="314" y="220">slug · startDate</text>
+            <text class="f" x="314" y="236">publishedAt</text>
+
+            <path class="rel" d="M200,167 C250,167 250,67 300,67"/><text class="rl" x="222" y="112">has</text>
+            <path class="rel" d="M200,175 C250,175 250,205 300,205"/><text class="rl" x="222" y="205">has</text>
+
+            <!-- Column 3 -->
+            <rect class="entkey" x="590" y="30" width="280" height="104"/>
+            <text class="n" x="604" y="54">EventGuest</text>
+            <text class="f" x="604" y="74">contactId · groupId</text>
+            <text class="f" x="604" y="90">isVip · partySize</text>
+            <text class="f" x="604" y="106">guestToken (personal link)</text>
+            <text class="f" x="604" y="122">firstOpenedAt · openCount</text>
+
+            <rect class="ent" x="590" y="170" width="130" height="72"/>
+            <text class="n" x="604" y="194">EventFunction</text>
+            <text class="f" x="604" y="214">name · date</text>
+            <text class="f" x="604" y="230">venue · dressCode</text>
+
+            <rect class="ent" x="740" y="170" width="130" height="56"/>
+            <text class="n" x="754" y="194">GuestGroup</text>
+            <text class="f" x="754" y="214">name</text>
+
+            <path class="rel" d="M400,67 C480,67 480,82 590,82"/><text class="rl" x="470" y="70">contact</text>
+            <path class="rel" d="M500,205 C540,205 545,120 590,120"/><text class="rl" x="520" y="150">event</text>
+
+            <rect class="ent" x="590" y="280" width="130" height="70"/>
+            <text class="n" x="604" y="304">Invitation</text>
+            <text class="f" x="604" y="324">templateKey</text>
+            <text class="f" x="604" y="340">content · sections</text>
+
+            <rect class="ent" x="740" y="280" width="130" height="70"/>
+            <text class="n" x="754" y="304">EventQuestion</text>
+            <text class="f" x="754" y="324">label · type</text>
+            <text class="f" x="754" y="340">options</text>
+
+            <path class="rel" d="M400,230 C480,230 480,300 590,300"/><text class="rl" x="470" y="270">invitation / questions</text>
+
+            <!-- Column 4 -->
+            <rect class="entkey" x="20" y="280" width="180" height="72"/>
+            <text class="n" x="34" y="304">Rsvp</text>
+            <text class="f" x="34" y="324">status · adultCount</text>
+            <text class="f" x="34" y="340">dietaryPreference</text>
+
+            <rect class="ent" x="20" y="386" width="180" height="56"/>
+            <text class="n" x="34" y="410">RsvpAttendance</text>
+            <text class="f" x="34" y="430">per function</text>
+
+            <rect class="ent" x="240" y="386" width="180" height="56"/>
+            <text class="n" x="254" y="410">RsvpAnswer</text>
+            <text class="f" x="254" y="430">custom questions</text>
+
+            <path class="rel" d="M590,120 C400,120 380,316 200,316"/><text class="rl" x="380" y="300">1:1</text>
+            <path class="rel" d="M110,352 L110,386"/>
+            <path class="rel" d="M200,330 C260,360 300,370 330,386"/>
+          </svg>
+        </div>
+        <figcaption>Workspace → Contact + Event; Contact + Event → EventGuest; EventGuest → Rsvp.</figcaption>
+      </figure>
+
+      <h3>Tables at a glance</h3>
+      <table>
+        <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>User</code></td><td>Organiser account (email, bcrypt password).</td></tr>
+          <tr><td><code>Workspace</code></td><td>Tenancy boundary, auto-created per user.</td></tr>
+          <tr><td><code>Contact</code></td><td>Workspace-level person. Deduped by <code>(workspaceId, mobileNormalized)</code>.</td></tr>
+          <tr><td><code>Event</code></td><td>Name, type, status, dates, slug, venue.</td></tr>
+          <tr><td><code>EventFunction</code></td><td>A ceremony/segment within an event (Mehendi, Sangeet…).</td></tr>
+          <tr><td><code>GuestGroup</code></td><td>Per-event custom group.</td></tr>
+          <tr><td><code>EventGuest</code></td><td>Participation: VIP, party size, personal token, open tracking.</td></tr>
+          <tr><td><code>Invitation</code></td><td>Template, content JSON, section toggles, version, published.</td></tr>
+          <tr><td><code>InvitationMedia</code></td><td>Gallery images.</td></tr>
+          <tr><td><code>Rsvp</code></td><td>1:1 with EventGuest — status, headcounts, diet.</td></tr>
+          <tr><td><code>RsvpAttendance</code></td><td>Which functions the guest is attending.</td></tr>
+          <tr><td><code>EventQuestion</code></td><td>Custom per-event RSVP questions.</td></tr>
+          <tr><td><code>RsvpAnswer</code></td><td>Answers to those questions.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <strong>Why JSON fields?</strong>
+        <code>Contact.customFields</code> and <code>EventGuest.eventCustomFields</code> absorb vertical-specific data without migrations. Promote a field to a real column only when a query needs it.
+      </div>
+    </section>
+
+    <!-- FLOWS -->
+    <section id="flows">
+      <h2>User flows</h2>
+
+      <h3>Organiser</h3>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 900 150" role="img" aria-label="Organiser flow">
+            <defs><style>
+              .n2{fill:#fff;stroke:#cbd5e1;stroke-width:1.4;rx:9}
+              .t2{font:600 12px -apple-system,Segoe UI,sans-serif;fill:#0f172a;text-anchor:middle}
+              .a2{stroke:#94a3b8;stroke-width:1.6;fill:none;marker-end:url(#ar)}
+            </style>
+            <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8"/></marker>
+            </defs>
+            <rect class="n2" x="8" y="55" width="104" height="42"/><text class="t2" x="60" y="80">Sign up</text>
+            <rect class="n2" x="132" y="55" width="104" height="42"/><text class="t2" x="184" y="80">Create event</text>
+            <rect class="n2" x="256" y="55" width="104" height="42"/><text class="t2" x="308" y="80">Add functions</text>
+            <rect class="n2" x="380" y="55" width="104" height="42"/><text class="t2" x="432" y="80">Build invite</text>
+            <rect class="n2" x="504" y="55" width="104" height="42"/><text class="t2" x="556" y="80">Import guests</text>
+            <rect class="n2" x="628" y="55" width="104" height="42"/><text class="t2" x="680" y="80">Share links</text>
+            <rect class="n2" x="752" y="55" width="140" height="42"/><text class="t2" x="822" y="80">Watch dashboard</text>
+            <path class="a2" d="M112,76 L132,76"/><path class="a2" d="M236,76 L256,76"/><path class="a2" d="M360,76 L380,76"/>
+            <path class="a2" d="M484,76 L504,76"/><path class="a2" d="M608,76 L628,76"/><path class="a2" d="M732,76 L752,76"/>
+          </svg>
+        </div>
+      </figure>
+
+      <h3>Guest</h3>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 900 150" role="img" aria-label="Guest flow">
+            <defs><style>
+              .n3{fill:#eef2ff;stroke:#6366f1;stroke-width:1.4;rx:9}
+              .t3{font:600 12px -apple-system,Segoe UI,sans-serif;fill:#312e81;text-anchor:middle}
+              .a3{stroke:#94a3b8;stroke-width:1.6;fill:none;marker-end:url(#ar3)}
+            </style>
+            <marker id="ar3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8"/></marker>
+            </defs>
+            <rect class="n3" x="20" y="55" width="150" height="42"/><text class="t3" x="95" y="80">Open personal link</text>
+            <rect class="n3" x="210" y="55" width="150" height="42"/><text class="t3" x="285" y="80">See invitation</text>
+            <rect class="n3" x="400" y="55" width="150" height="42"/><text class="t3" x="475" y="80">Tap RSVP</text>
+            <rect class="n3" x="590" y="55" width="150" height="42"/><text class="t3" x="665" y="80">Answer &amp; submit</text>
+            <rect class="n3" x="780" y="55" width="100" height="42"/><text class="t3" x="830" y="80">Confirmed</text>
+            <path class="a3" d="M170,76 L210,76"/><path class="a3" d="M360,76 L400,76"/><path class="a3" d="M550,76 L590,76"/><path class="a3" d="M740,76 L780,76"/>
+          </svg>
+        </div>
+      </figure>
+
+      <h3>What the guest sees (mobile)</h3>
+      <div class="grid2">
+        <figure>
+          <div class="fig">
+            <svg viewBox="0 0 300 460" role="img" aria-label="Invitation mobile mockup">
+              <rect x="70" y="8" width="160" height="444" rx="24" fill="#1a0f0a"/>
+              <text x="150" y="60" text-anchor="middle" fill="#fcd34d" style="font:400 10px sans-serif;letter-spacing:2px">DEAR RAJESH SHARMA</text>
+              <text x="150" y="96" text-anchor="middle" style="font:700 22px Georgia,serif" fill="#fef3c7">Rahul &amp; Neha</text>
+              <text x="150" y="122" text-anchor="middle" style="font:400 10px sans-serif;letter-spacing:2px" fill="#fcd34d">10 — 12 DEC 2026</text>
+              <text x="150" y="142" text-anchor="middle" style="font:400 10px sans-serif;letter-spacing:2px" fill="#fcd34d">KOLKATA</text>
+              <rect x="120" y="156" width="60" height="20" rx="10" fill="none" stroke="#fbbf24"/>
+              <text x="150" y="170" text-anchor="middle" style="font:600 9px sans-serif;letter-spacing:1px" fill="#fbbf24">VIP</text>
+              <text x="150" y="208" text-anchor="middle" style="font:400 9px sans-serif;letter-spacing:2px" fill="#fbbf24">EVENTS</text>
+              <rect x="92" y="220" width="116" height="34" rx="6" fill="#2a1810"/>
+              <text x="150" y="234" text-anchor="middle" style="font:600 11px sans-serif" fill="#fde68a">Mehendi</text>
+              <text x="150" y="247" text-anchor="middle" style="font:400 9px sans-serif" fill="#d1a86a">10 Dec · 5:00 PM</text>
+              <rect x="92" y="262" width="116" height="34" rx="6" fill="#2a1810"/>
+              <text x="150" y="276" text-anchor="middle" style="font:600 11px sans-serif" fill="#fde68a">Sangeet</text>
+              <text x="150" y="289" text-anchor="middle" style="font:400 9px sans-serif" fill="#d1a86a">11 Dec · 7:00 PM</text>
+              <rect x="92" y="304" width="116" height="34" rx="6" fill="#2a1810"/>
+              <text x="150" y="318" text-anchor="middle" style="font:600 11px sans-serif" fill="#fde68a">Wedding</text>
+              <text x="150" y="331" text-anchor="middle" style="font:400 9px sans-serif" fill="#d1a86a">12 Dec · 11:00 AM</text>
+              <text x="150" y="368" text-anchor="middle" style="font:400 9px sans-serif;letter-spacing:2px" fill="#fbbf24">RSVP</text>
+              <rect x="96" y="382" width="108" height="30" rx="15" fill="#fbbf24"/>
+              <text x="150" y="401" text-anchor="middle" style="font:700 10px sans-serif" fill="#1a0f0a">Confirm attendance</text>
+            </svg>
+          </div>
+          <figcaption>The Royal template, personalised for a VIP guest.</figcaption>
+        </figure>
+
+        <figure>
+          <div class="fig">
+            <svg viewBox="0 0 300 460" role="img" aria-label="Dashboard mockup">
+              <rect x="10" y="10" width="280" height="440" rx="14" fill="#f7f8fb" stroke="#e5e8ef"/>
+              <text x="28" y="42" style="font:700 14px sans-serif" fill="#0f172a">Rahul &amp; Neha Wedding</text>
+              <text x="28" y="60" style="font:400 10px sans-serif" fill="#64748b">wedding · 12/10/2026 · Kolkata</text>
+              <text x="28" y="86" style="font:600 10px sans-serif;letter-spacing:1px" fill="#64748b">RSVP OVERVIEW</text>
+              <g>
+                <rect x="28" y="96" width="58" height="46" rx="8" fill="#fff" stroke="#e5e8ef"/><text x="38" y="118" style="font:700 15px sans-serif" fill="#0f172a">12</text><text x="38" y="132" style="font:400 8px sans-serif" fill="#94a3b8">INVITED</text>
+                <rect x="94" y="96" width="58" height="46" rx="8" fill="#fff" stroke="#e5e8ef"/><text x="104" y="118" style="font:700 15px sans-serif" fill="#4f46e5">9</text><text x="104" y="132" style="font:400 8px sans-serif" fill="#94a3b8">OPENED</text>
+                <rect x="160" y="96" width="58" height="46" rx="8" fill="#fff" stroke="#e5e8ef"/><text x="170" y="118" style="font:700 15px sans-serif" fill="#0f172a">8</text><text x="170" y="132" style="font:400 8px sans-serif" fill="#94a3b8">RESPONDED</text>
+                <rect x="226" y="96" width="52" height="46" rx="8" fill="#fff" stroke="#e5e8ef"/><text x="236" y="118" style="font:700 15px sans-serif" fill="#b45309">4</text><text x="236" y="132" style="font:400 8px sans-serif" fill="#94a3b8">PENDING</text>
+                <rect x="28" y="150" width="58" height="46" rx="8" fill="#fff" stroke="#e5e8ef"/><text x="38" y="172" style="font:700 15px sans-serif" fill="#16a34a">5</text><text x="38" y="186" style="font:400 8px sans-serif" fill="#94a3b8">CONFIRMED</text>
+                <rect x="94" y="150" width="58" height="46" rx="8" fill="#fff" stroke="#e5e8ef"/><text x="104" y="172" style="font:700 15px sans-serif" fill="#b45309">2</text><text x="104" y="186" style="font:400 8px sans-serif" fill="#94a3b8">MAYBE</text>
+                <rect x="160" y="150" width="58" height="46" rx="8" fill="#fff" stroke="#e5e8ef"/><text x="170" y="172" style="font:700 15px sans-serif" fill="#dc2626">1</text><text x="170" y="186" style="font:400 8px sans-serif" fill="#94a3b8">DECLINED</text>
+                <rect x="226" y="150" width="52" height="46" rx="8" fill="#fff" stroke="#e5e8ef"/><text x="236" y="172" style="font:700 15px sans-serif" fill="#4f46e5">3/4</text><text x="236" y="186" style="font:400 8px sans-serif" fill="#94a3b8">VIP</text>
+              </g>
+              <text x="28" y="228" style="font:600 10px sans-serif;letter-spacing:1px" fill="#64748b">ATTENDANCE BY FUNCTION</text>
+              <rect x="28" y="238" width="250" height="1" fill="#e5e8ef"/>
+              <text x="28" y="262" style="font:400 11px sans-serif" fill="#334155">Mehendi</text><text x="258" y="262" text-anchor="end" style="font:600 11px sans-serif" fill="#0f172a">7</text>
+              <rect x="28" y="276" width="250" height="1" fill="#e5e8ef"/>
+              <text x="28" y="300" style="font:400 11px sans-serif" fill="#334155">Sangeet</text><text x="258" y="300" text-anchor="end" style="font:600 11px sans-serif" fill="#0f172a">6</text>
+              <rect x="28" y="314" width="250" height="1" fill="#e5e8ef"/>
+              <text x="28" y="338" style="font:400 11px sans-serif" fill="#334155">Wedding Ceremony</text><text x="258" y="338" text-anchor="end" style="font:600 11px sans-serif" fill="#0f172a">5</text>
+              <rect x="28" y="352" width="250" height="1" fill="#e5e8ef"/>
+              <text x="28" y="376" style="font:400 11px sans-serif" fill="#334155">Reception</text><text x="258" y="376" text-anchor="end" style="font:600 11px sans-serif" fill="#0f172a">4</text>
+            </svg>
+          </div>
+          <figcaption>The organiser's event overview: statuses + per-function counts.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ROUTES -->
+    <section id="routes">
+      <h2>Screens &amp; routes</h2>
+      <table>
+        <thead><tr><th>Route</th><th>Who</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>/signin</code>, <code>/signup</code></td><td>Organiser</td><td>Auth; signup provisions a workspace.</td></tr>
+          <tr><td><code>/dashboard</code></td><td>Organiser</td><td>Workspace summary + event list.</td></tr>
+          <tr><td><code>/events/new</code></td><td>Organiser</td><td>Create an event.</td></tr>
+          <tr><td><code>/events/[id]</code></td><td>Organiser</td><td>Overview + metrics + status.</td></tr>
+          <tr><td><code>/events/[id]/functions</code></td><td>Organiser</td><td>Functions CRUD.</td></tr>
+          <tr><td><code>/events/[id]/guests</code></td><td>Organiser</td><td>Guest list + add guest.</td></tr>
+          <tr><td><code>/events/[id]/guests/import</code></td><td>Organiser</td><td>CSV import wizard.</td></tr>
+          <tr><td><code>/events/[id]/guests/[guestId]</code></td><td>Organiser</td><td>Guest detail + personal link.</td></tr>
+          <tr><td><code>/events/[id]/invitation</code></td><td>Organiser</td><td>Invitation editor + publish.</td></tr>
+          <tr><td><code>/e/[slug]/[token]</code></td><td>Guest</td><td><strong>Public</strong> personalised invitation.</td></tr>
+          <tr><td><code>/e/[slug]/[token]/rsvp</code></td><td>Guest</td><td>RSVP form + confirmation.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- STACK -->
+    <section id="stack">
+      <h2>Architecture</h2>
+      <div class="card">
+        <table>
+          <thead><tr><th>Concern</th><th>Choice</th></tr></thead>
+          <tbody>
+            <tr><td>Framework</td><td>Next.js (App Router) + TypeScript</td></tr>
+            <tr><td>Mutations</td><td>Server Actions — thin: validate (zod) → call service → revalidate</td></tr>
+            <tr><td>Database</td><td>PostgreSQL via Prisma</td></tr>
+            <tr><td>Auth</td><td>Auth.js v5 (credentials, bcrypt, JWT)</td></tr>
+            <tr><td>Styling</td><td>Tailwind CSS</td></tr>
+            <tr><td>Media</td><td>Local disk in dev, Vercel Blob in production</td></tr>
+            <tr><td>Tests</td><td>Vitest (unit/integration) + Playwright (e2e)</td></tr>
+          </tbody>
+        </table>
+        <h4>Two rules that keep it sane</h4>
+        <ol>
+          <li><strong>All business logic lives in <code>lib/services/*</code>.</strong> Server actions and pages are thin wrappers. This is why the CSV engine, metrics and token logic are unit-testable without a database.</li>
+          <li><strong>Ownership is enforced in services, not the UI.</strong> Every organiser operation re-checks that the event's workspace belongs to the signed-in user.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SETUP -->
+    <section id="setup">
+      <h2>Local setup</h2>
+      <div class="code">
+        <button class="copy">Copy</button>
+        <pre><span class="c"># 1. install</span>
+npm install
+
+<span class="c"># 2. configure — copy and fill in</span>
+cp .env.example .env
+<span class="c">#   DATABASE_URL      local Postgres</span>
+<span class="c">#   TEST_DATABASE_URL used by integration tests</span>
+<span class="c">#   AUTH_SECRET       npx auth secret</span>
+
+<span class="c"># 3. create databases + migrate</span>
+createdb rsvp_app_dev
+createdb rsvp_app_test
+npx prisma migrate dev
+
+<span class="c"># 4. seed the demo wedding</span>
+npm run db:seed
+
+<span class="c"># 5. run</span>
+npm run dev   <span class="c"># http://localhost:3000</span></pre>
+      </div>
+      <div class="callout tip">
+        <strong>Prerequisites</strong>
+        Node 20+ and PostgreSQL running locally. On Windows, <code>createdb</code> ships with the PostgreSQL install.
+      </div>
+      <div class="callout warn">
+        <strong>Windows PowerShell</strong>
+        Inline env vars use <code>$env:NAME='value'</code>. For a single command: <code>$env:DATABASE_URL='…'; npm run db:seed</code>.
+      </div>
+    </section>
+
+    <!-- DEMO -->
+    <section id="demo">
+      <h2>Demo tour</h2>
+      <div class="card">
+        <p><strong>Credentials</strong> (after <code>npm run db:seed</code>):</p>
+        <table>
+          <tbody>
+            <tr><td>Email</td><td><code>demo@example.com</code></td></tr>
+            <tr><td>Password</td><td><code>demo1234</code></td></tr>
+            <tr><td>Event slug</td><td><code>rahul-neha-wedding</code></td></tr>
+          </tbody>
+        </table>
+        <h4>A 5-minute script to show someone</h4>
+        <ol class="steps">
+          <li>Sign in → land on <strong>Dashboard</strong> with the seeded wedding and workspace stats.</li>
+          <li>Open the event → point at the <strong>RSVP overview</strong> and per-function attendance.</li>
+          <li>Go to <strong>Guests</strong> → copy a personal link → open it in a phone-width window. Show the personalised invitation.</li>
+          <li>Go to <strong>Invitation</strong> → change the template to Minimal → toggle a section → see the live preview change.</li>
+          <li>Back on the guest link → tap <strong>RSVP</strong> → submit → return to the event dashboard and watch the numbers move.</li>
+          <li>Go to <strong>Guests → Import CSV</strong> → drop a spreadsheet → show column mapping and the duplicate/validation summary.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- TESTING -->
+    <section id="testing">
+      <h2>Testing</h2>
+      <div class="code">
+        <button class="copy">Copy</button>
+        <pre>npm test           <span class="c"># Vitest — unit + integration</span>
+npm run test:e2e   <span class="c"># Playwright — the full loop</span>
+npm run lint       <span class="c"># ESLint</span>
+npm run build      <span class="c"># production build</span></pre>
+      </div>
+      <table>
+        <thead><tr><th>Suite</th><th>What it proves</th></tr></thead>
+        <tbody>
+          <tr><td><code>token/phone/slug</code></td><td>High-entropy tokens; E.164 normalisation; unique slugs.</td></tr>
+          <tr><td><code>import engine</code></td><td>CSV parsing, messy-header mapping, validation, duplicate detection.</td></tr>
+          <tr><td><code>metrics</code></td><td>Status counts and per-function aggregation.</td></tr>
+          <tr><td><code>investor-schema</code></td><td>The investor vertical round-trips with <strong>zero schema change</strong>.</td></tr>
+          <tr><td><code>e2e loop</code></td><td>Organiser signs in and sees the dashboard; a guest RSVPs and the DB reflects it.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout note">
+        <strong>Integration tests auto-migrate the test DB</strong>
+        <code>tests/global-setup.ts</code> runs <code>prisma migrate deploy</code> against <code>TEST_DATABASE_URL</code> before the suite, so the investor test is always against a real database.
+      </div>
+    </section>
+
+    <!-- DEPLOY -->
+    <section id="deploy">
+      <h2>Deployment</h2>
+      <p>Deployed on <strong>Vercel</strong> (app) + <strong>Neon</strong> (Postgres) + <strong>Vercel Blob</strong> (uploads) — all free tier. The production URL for this build is a <code>*.vercel.app</code> domain.</p>
+      <ul>
+        <li><code>postinstall: prisma generate</code> — builds the Prisma client on Vercel.</li>
+        <li><code>vercel-build: prisma migrate deploy &amp;&amp; next build</code> — applies migrations, then builds.</li>
+      </ul>
+      <div class="callout tip">
+        <strong>Full walkthrough</strong>
+        See the companion guide <em>“Deploy any app on Neon + Vercel”</em> for the step-by-step, with the traps we hit (duplicate-repo error, Blob token scope, <code>channel_binding</code>) and how to avoid them.
+      </div>
+    </section>
+
+    <!-- STRUCTURE -->
+    <section id="structure">
+      <h2>Project structure</h2>
+      <div class="code">
+        <button class="copy">Copy</button>
+        <pre>app/
+  (auth)/                    signin, signup + actions
+  (dashboard)/               organiser app (guarded by layout)
+    dashboard/               workspace summary + events
+    events/[eventId]/        overview, functions, guests, invitation
+  e/[eventSlug]/[guestToken] PUBLIC invitation + RSVP
+  api/auth, api/upload
+lib/
+  services/                  ALL business logic
+    import/                  parse · map · analyze
+    events · contacts · eventGuests · invitation · rsvp
+    metrics · dashboard · workspaces · functions
+  utils/                     token · phone · slug
+  validation/                zod schemas
+components/
+  ui/                        Button · Input · Card
+  invitation-templates/      Royal · Minimal · renderer
+prisma/                      schema · migrations · seed
+tests/
+  unit/                      Vitest
+  e2e/                       Playwright
+docs/superpowers/            spec + implementation plan</pre>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+      <h2>FAQ &amp; troubleshooting</h2>
+
+      <details open>
+        <summary>Why one Guest table instead of per-vertical tables?</summary>
+        <div class="body"><p>Because a person is the same person across events. One <code>Contact</code> + one <code>EventGuest</code> avoids duplicate records and gives you a CRM for free. Vertical differences are data (custom questions, JSON fields), not schema.</p></div>
+      </details>
+      <details>
+        <summary>What happens if two people share a mobile number?</summary>
+        <div class="body"><p>They collapse into one <code>Contact</code> (dedup is by normalised mobile). Acceptable for the MVP; merge/split tooling is deferred. Use distinct numbers for distinct people.</p></div>
+      </details>
+      <details>
+        <summary>Can a guest RSVP more than once?</summary>
+        <div class="body"><p>Yes — <code>Rsvp</code> is 1:1 with the guest, so a second submission overwrites the first ("latest wins"). Attendance and custom answers are replaced transactionally.</p></div>
+      </details>
+      <details>
+        <summary>Are invitation links secure?</summary>
+        <div class="body"><p>Tokens are ~130-bit random base32, so they can't be enumerated. Anyone with the link can view and RSVP — that's the intent of an invitation. RSVP submissions are rate-limited.</p></div>
+      </details>
+      <details>
+        <summary>Why don't uploads work after deploying?</summary>
+        <div class="body"><p>Vercel's filesystem is ephemeral. Ensure <code>BLOB_READ_WRITE_TOKEN</code> is set for <em>Production</em> and redeploy. In dev, files go to <code>public/uploads</code>.</p></div>
+      </details>
+      <details>
+        <summary>Can I add a new event type (conference, AGM)?</summary>
+        <div class="body"><p>Yes — <code>EventType</code> already includes them. You'd typically add custom questions and maybe a new template. No schema change required.</p></div>
+      </details>
+      <details>
+        <summary>How do I send invitations at scale?</summary>
+        <div class="body"><p>Not in this build. Sending is manual (copy link / WhatsApp deep link). Automated WhatsApp Business messaging and reminders are the next subsystem.</p></div>
+      </details>
+    </section>
+
+    <!-- ROADMAP -->
+    <section id="roadmap">
+      <h2>Roadmap</h2>
+      <p>What's built, and what comes next. Each later phase is a separate subsystem with its own spec and plan.</p>
+      <table>
+        <thead><tr><th>Phase</th><th>Scope</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>1 · Core</td><td>Event · Contact · Guest · Invitation · RSVP engine</td><td><span class="pill free">Shipped</span></td></tr>
+          <tr><td>2 · Communication</td><td>WhatsApp Business API, reminders, campaign tracking</td><td><span class="pill">Next</span></td></tr>
+          <tr><td>3 · Event day</td><td>QR check-in, live attendance dashboard</td><td><span class="pill">Planned</span></td></tr>
+          <tr><td>4 · Corporate</td><td>Registration, meeting scheduler, agenda, documents</td><td><span class="pill">Planned</span></td></tr>
+          <tr><td>5 · AI layer</td><td>Invitation copywriter, CSV column mapping, event analyst</td><td><span class="pill">Planned</span></td></tr>
+          <tr><td>6 · Agency</td><td>Multi-client, teams, white-label, custom domains</td><td><span class="pill">Planned</span></td></tr>
+          <tr><td>7 · Marketplace</td><td>Vendors, hotels, catering, photography, travel</td><td><span class="pill">Planned</span></td></tr>
+        </tbody>
+      </table>
+      <div class="callout note">
+        <strong>Deliberately not built yet</strong>
+        Vendor marketplace, budgeting, hotel booking, AI chatbot, native apps, guest payments, seating plans. Adding these early would slow the core loop without proving anything.
+      </div>
+    </section>
+
+    <footer>
+      RSVP App — Build #1. Companion to the spec at <code>docs/superpowers/specs/</code> and the plan at <code>docs/superpowers/plans/</code>.
+    </footer>
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      var text = pre ? pre.innerText : "";
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = "Copied!"; btn.classList.add("ok");
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1400);
+      });
+    });
+  });
+  var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+  var sections = links.map(function (a) { return document.querySelector(a.getAttribute("href")); }).filter(Boolean);
+  if ("IntersectionObserver" in window) {
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          links.forEach(function (a) { a.style.background = ""; a.style.fontWeight = ""; });
+          var active = links.find(function (a) { return a.getAttribute("href") === "#" + e.target.id; });
+          if (active) { active.style.background = "var(--brand-soft)"; active.style.fontWeight = "600"; }
+        }
+      });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    sections.forEach(function (s) { obs.observe(s); });
+  }
+</script>
+</body>
+</html>

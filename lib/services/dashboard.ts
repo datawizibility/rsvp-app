@@ -27,6 +27,8 @@ export async function getEventMetrics(userId: string, eventId: string) {
           functions: guest.rsvp.attendance
             .filter((a) => a.attending)
             .map((a) => a.eventFunctionId),
+          adults: guest.rsvp.adultCount,
+          children: guest.rsvp.childCount,
         }
       : null,
   }));
@@ -36,7 +38,12 @@ export async function getEventMetrics(userId: string, eventId: string) {
 
   const perFunctionByName = functions.map((fn) => ({
     name: fn.name,
-    count: metrics.perFunction[fn.id] ?? 0,
+    ...(metrics.perFunction[fn.id] ?? {
+      guests: 0,
+      people: 0,
+      tentativeGuests: 0,
+      tentativePeople: 0,
+    }),
   }));
 
   return { ...metrics, perFunctionByName };

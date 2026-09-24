@@ -32,6 +32,12 @@ export default async function GuestsPage({
           </p>
         </div>
         <div className="flex gap-2">
+          <a
+            href={`/events/${eventId}/guests/export`}
+            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50"
+          >
+            Download CSV
+          </a>
           <Link
             href={`/events/${eventId}/guests/import`}
             className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50"

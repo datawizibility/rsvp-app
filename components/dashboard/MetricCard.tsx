@@ -1,10 +1,12 @@
 export function MetricCard({
   label,
   value,
+  sub,
   tone = "slate",
 }: {
   label: string;
   value: number | string;
+  sub?: string;
   tone?: "slate" | "green" | "amber" | "red" | "indigo";
 }) {
   const tones: Record<string, string> = {
@@ -20,6 +22,7 @@ export function MetricCard({
       <div className="mt-1 text-xs uppercase tracking-wide text-slate-500">
         {label}
       </div>
+      {sub && <div className="mt-0.5 text-xs text-slate-400">{sub}</div>}
     </div>
   );
 }

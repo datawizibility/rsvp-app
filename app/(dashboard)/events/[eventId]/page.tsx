@@ -88,8 +88,18 @@ export default async function EventOverviewPage({
           <MetricCard label="Opened" value={metrics.opened} tone="indigo" />
           <MetricCard label="Responded" value={metrics.responded} />
           <MetricCard label="Pending" value={metrics.pending} tone="amber" />
-          <MetricCard label="Confirmed" value={metrics.confirmed} tone="green" />
-          <MetricCard label="Maybe" value={metrics.maybe} tone="amber" />
+          <MetricCard
+            label="Confirmed"
+            value={metrics.confirmed}
+            sub={`${metrics.confirmedPeople.toLocaleString()} people`}
+            tone="green"
+          />
+          <MetricCard
+            label="Maybe"
+            value={metrics.maybe}
+            sub={`${metrics.tentativePeople.toLocaleString()} people tentative`}
+            tone="amber"
+          />
           <MetricCard label="Declined" value={metrics.declined} tone="red" />
           <MetricCard
             label={`VIP confirmed (${metrics.vipConfirmed}/${metrics.vipTotal})`}
@@ -104,14 +114,32 @@ export default async function EventOverviewPage({
           <h3 className="mb-3 text-sm font-semibold text-slate-900">
             Attendance by function
           </h3>
-          <ul className="divide-y divide-slate-100 text-sm">
-            {metrics.perFunctionByName.map((fn) => (
-              <li key={fn.name} className="flex items-center justify-between py-2">
-                <span className="text-slate-700">{fn.name}</span>
-                <span className="font-medium text-slate-900">{fn.count}</span>
-              </li>
-            ))}
-          </ul>
+          <table className="w-full text-sm">
+            <thead className="text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="py-2 text-left font-medium">Function</th>
+                <th className="py-2 text-right font-medium">Guests</th>
+                <th className="py-2 text-right font-medium">People</th>
+                <th className="py-2 text-right font-medium">Maybe</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {metrics.perFunctionByName.map((fn) => (
+                <tr key={fn.name}>
+                  <td className="py-2 text-slate-700">{fn.name}</td>
+                  <td className="py-2 text-right font-medium text-slate-900">
+                    {fn.guests}
+                  </td>
+                  <td className="py-2 text-right font-medium text-slate-900">
+                    {fn.people.toLocaleString()}
+                  </td>
+                  <td className="py-2 text-right text-slate-500">
+                    {fn.tentativeGuests} / {fn.tentativePeople.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Card>
       )}
 

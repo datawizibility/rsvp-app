@@ -54,7 +54,11 @@ export async function listEventGuests(userId: string, eventId: string) {
   await getEventForUser(userId, eventId);
   return prisma.eventGuest.findMany({
     where: { eventId },
-    include: { contact: true, group: true, rsvp: true },
+    include: {
+      contact: true,
+      group: true,
+      rsvp: { include: { attendance: { include: { eventFunction: true } } } },
+    },
     orderBy: { contact: { name: "asc" } },
   });
 }
