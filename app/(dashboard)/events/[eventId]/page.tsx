@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { requireUserId } from "@/lib/session";
 import { getEventDetail } from "@/lib/services/events";
+import { getEventMetrics } from "@/lib/services/dashboard";
 import { setEventStatusAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ export default async function EventOverviewPage({
   const { eventId } = await params;
   const userId = await requireUserId();
   const event = await getEventDetail(userId, eventId);
+  const metrics = await getEventMetrics(userId, eventId);
 
   return (
     <div className="space-y-6">
@@ -77,6 +80,40 @@ export default async function EventOverviewPage({
           </Card>
         </Link>
       </div>
+
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-slate-900">RSVP overview</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <MetricCard label="Invited" value={metrics.invited} />
+          <MetricCard label="Opened" value={metrics.opened} tone="indigo" />
+          <MetricCard label="Responded" value={metrics.responded} />
+          <MetricCard label="Pending" value={metrics.pending} tone="amber" />
+          <MetricCard label="Confirmed" value={metrics.confirmed} tone="green" />
+          <MetricCard label="Maybe" value={metrics.maybe} tone="amber" />
+          <MetricCard label="Declined" value={metrics.declined} tone="red" />
+          <MetricCard
+            label={`VIP confirmed (${metrics.vipConfirmed}/${metrics.vipTotal})`}
+            value={metrics.vipConfirmed}
+            tone="indigo"
+          />
+        </div>
+      </div>
+
+      {metrics.perFunctionByName.length > 0 && (
+        <Card>
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">
+            Attendance by function
+          </h3>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {metrics.perFunctionByName.map((fn) => (
+              <li key={fn.name} className="flex items-center justify-between py-2">
+                <span className="text-slate-700">{fn.name}</span>
+                <span className="font-medium text-slate-900">{fn.count}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card>
         <h3 className="mb-3 text-sm font-semibold text-slate-900">Schedule</h3>

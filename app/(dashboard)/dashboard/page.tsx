@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { requireUserId } from "@/lib/session";
 import { listEventsForUser } from "@/lib/services/events";
+import { getWorkspaceSummary } from "@/lib/services/dashboard";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const userId = await requireUserId();
-  const events = await listEventsForUser(userId);
+  const [events, summary] = await Promise.all([
+    listEventsForUser(userId),
+    getWorkspaceSummary(userId),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -19,6 +24,12 @@ export default async function DashboardPage() {
         >
           New event
         </Link>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <MetricCard label="Events" value={summary.events} />
+        <MetricCard label="Contacts" value={summary.contacts} />
+        <MetricCard label="Confirmed guests" value={summary.confirmed} tone="green" />
       </div>
 
       {events.length === 0 ? (
