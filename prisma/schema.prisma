@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventType {
+  wedding
+  birthday
+  corporate
+  investor
+  conference
+  party
+  religious
+  other
+}
+
+enum EventStatus {
+  draft
+  published
+  completed
+  archived
+}
+
+enum RsvpStatus {
+  yes
+  maybe
+  no
+}
+
+enum DietaryPreference {
+  veg
+  nonveg
+  jain
+  other
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime    @default(now())
+  workspaces   Workspace[]
+}
+
+model Workspace {
+  id        String    @id @default(cuid())
+  name      String
+  ownerId   String
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  contacts  Contact[]
+  events    Event[]
+  createdAt DateTime  @default(now())
+
+  @@index([ownerId])
+}
+
+model Contact {
+  id               String       @id @default(cuid())
+  workspaceId      String
+  workspace        Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name             String
+  mobile           String
+  mobileNormalized String
+  email            String?
+  organisation     String?
+  designation      String?
+  city             String?
+  masterTags       Json?
+  customFields     Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  eventGuests      EventGuest[]
+
+  @@unique([workspaceId, mobileNormalized])
+  @@index([workspaceId])
+}
+
+model Event {
+  id            String          @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name          String
+  type          EventType
+  status        EventStatus     @default(draft)
+  startDate     DateTime
+  endDate       DateTime?
+  locationName  String?
+  city          String?
+  coverImageUrl String?
+  hostName      String?
+  contactNumber String?
+  slug          String          @unique
+  publishedAt   DateTime?
+  createdAt     DateTime        @default(now())
+  functions     EventFunction[]
+  groups        GuestGroup[]
+  eventGuests   EventGuest[]
+  invitation    Invitation?
+  questions     EventQuestion[]
+  rsvps         Rsvp[]
+
+  @@index([workspaceId])
+}
+
+model EventFunction {
+  id           String           @id @default(cuid())
+  eventId      String
+  event        Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name         String
+  date         DateTime
+  startTime    String?
+  endTime      String?
+  venueName    String?
+  venueAddress String?
+  description  String?
+  dressCode    String?
+  capacity     Int?
+  rsvpRequired Boolean          @default(true)
+  sortOrder    Int              @default(0)
+  attendance   RsvpAttendance[]
+
+  @@index([eventId])
+}
+
+model GuestGroup {
+  id     String       @id @default(cuid())
+  eventId String
+  event   Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name   String
+  guests EventGuest[]
+
+  @@unique([eventId, name])
+}
+
+model EventGuest {
+  id                String    @id @default(cuid())
+  eventId           String
+  event             Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contactId         String
+  contact           Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  groupId           String?
+  group             GuestGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  isVip             Boolean   @default(false)
+  partySize         Int       @default(1)
+  guestToken        String    @unique
+  eventCustomFields Json?
+  firstOpenedAt     DateTime?
+  openCount         Int       @default(0)
+  rsvp              Rsvp?
+
+  @@unique([eventId, contactId])
+  @@index([eventId])
+}
+
+model Invitation {
+  id            String            @id @default(cuid())
+  eventId       String            @unique
+  event         Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  templateKey   String            @default("royal")
+  content       Json
+  sections      Json
+  coverImageUrl String?
+  version       Int               @default(1)
+  published     Boolean           @default(false)
+  media         InvitationMedia[]
+}
+
+model InvitationMedia {
+  id           String     @id @default(cuid())
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  url          String
+  type         String     @default("image")
+  sortOrder    Int        @default(0)
+}
+
+model Rsvp {
+  id                    String            @id @default(cuid())
+  eventId               String
+  event                 Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventGuestId          String            @unique
+  eventGuest            EventGuest        @relation(fields: [eventGuestId], references: [id], onDelete: Cascade)
+  status                RsvpStatus
+  adultCount            Int               @default(0)
+  childCount            Int               @default(0)
+  accommodationRequired Boolean?
+  travelRequired        Boolean?
+  dietaryPreference     DietaryPreference?
+  message               String?
+  respondedAt           DateTime          @default(now())
+  attendance            RsvpAttendance[]
+  answers               RsvpAnswer[]
+
+  @@index([eventId])
+}
+
+model RsvpAttendance {
+  id              String        @id @default(cuid())
+  rsvpId          String
+  rsvp            Rsvp          @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  eventFunctionId String
+  eventFunction   EventFunction @relation(fields: [eventFunctionId], references: [id], onDelete: Cascade)
+  attending       Boolean       @default(true)
+
+  @@unique([rsvpId, eventFunctionId])
+}
+
+model EventQuestion {
+  id        String       @id @default(cuid())
+  eventId   String
+  event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  label     String
+  type      String       @default("text")
+  options   Json?
+  sortOrder Int          @default(0)
+  answers   RsvpAnswer[]
+
+  @@index([eventId])
+}
+
+model RsvpAnswer {
+  id         String        @id @default(cuid())
+  rsvpId     String
+  rsvp       Rsvp          @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  questionId String
+  question   EventQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer     String
+
+  @@unique([rsvpId, questionId])
+}
