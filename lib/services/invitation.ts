@@ -97,7 +97,7 @@ export async function updateInvitation(
 }
 
 export async function publishInvitation(userId: string, eventId: string) {
-  const event = await getEventForUser(userId, eventId);
+  await getEventForUser(userId, eventId);
   const invitation = await getOrCreateInvitation(userId, eventId);
   if (!invitation) throw new NotFoundError("Invitation not found");
 

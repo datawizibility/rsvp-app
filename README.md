@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RSVP App
 
-## Getting Started
+A universal **Event + Contact + Guest + Invitation + RSVP** engine, demonstrated through a wedding.
 
-First, run the development server:
+This is Build #1 (Slice A) of the Event Platform blueprint: one organiser creates an event, builds a mobile-web invitation, imports a guest list, shares personalised links, and watches RSVPs land on a dashboard. A guest opens a personal link, views the invitation, and RSVPs.
+
+## Stack
+
+- Next.js (App Router) + TypeScript, Tailwind CSS
+- Prisma + PostgreSQL
+- Auth.js v5 (credentials, bcrypt, JWT sessions)
+- Vitest (unit/integration) + Playwright (e2e)
+- papaparse + zod
+
+## Architecture
+
+- **Monolith with a service layer.** Server Actions validate with zod, then call `lib/services/*`. All business logic lives in services; ownership (`event.workspace.ownerId === session.user.id`) is enforced there, not only in the UI.
+- **Universal guest engine.** One `Contact` (workspace-level CRM) + one `EventGuest` (event participation). No per-vertical guest tables — vertical data rides in `customFields` / `eventCustomFields`. The investor vertical is proven to need zero schema change by a test.
+- **Personalised links.** `Event.slug` + `EventGuest.guestToken` → `/e/<slug>/<token>`. Invitation content is shared; person-specific values are overlaid at render.
+- **Public invitation** is server-rendered (fast mobile links, OG previews).
+
+## Getting started
+
+Prerequisites: Node 20+, PostgreSQL running locally.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `.env.example` to `.env` and fill in your database credentials:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+DATABASE_URL="postgresql://postgres:PASSWORD@localhost:5432/rsvp_app_dev?schema=public"
+TEST_DATABASE_URL="postgresql://postgres:PASSWORD@localhost:5432/rsvp_app_test?schema=public"
+AUTH_SECRET="..."   # npx auth secret
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create the databases and migrate:
 
-## Learn More
+```bash
+createdb rsvp_app_dev
+createdb rsvp_app_test
+npx prisma migrate dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Seed a demo wedding (login `demo@example.com` / `demo1234`, event slug `rahul-neha-wedding`):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run db:seed
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run the app:
 
-## Deploy on Vercel
+```bash
+npm run dev        # http://localhost:3000
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Testing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm test           # Vitest: unit + integration (migrates the test DB automatically)
+npm run test:e2e   # Playwright: organiser + guest end-to-end loop
+npm run build      # production build
+```
+
+## Project layout
+
+```
+app/
+  (auth)/                    signin, signup + actions
+  (dashboard)/               organiser app (guarded by layout)
+    dashboard/               workspace summary + events
+    events/[eventId]/        overview, functions, guests, invitation
+  e/[eventSlug]/[guestToken] PUBLIC invitation + RSVP
+  api/auth, api/upload
+lib/
+  services/                  all business logic (events, contacts, eventGuests,
+                             invitation, rsvp, metrics, import/, dashboard)
+  utils/                     token, phone, slug
+  validation/                zod schemas
+components/
+  ui/                        Button, Input, Card
+  invitation-templates/      Royal, Minimal
+prisma/                      schema + migrations + seed
+tests/                       unit/ (Vitest), e2e/ (Playwright)
+docs/superpowers/            design spec + implementation plan
+```
+
+## Media uploads
+
+Cover/gallery images are written to `public/uploads` in development via `lib/storage/media.ts`. On Vercel the filesystem is ephemeral — swap `saveUpload()` for Cloudinary/UploadThing using the same signature. The upload endpoint already validates type and size (≤ 5 MB).
+
+## Deploy notes
+
+- App → Vercel. DB → Neon (set `DATABASE_URL`). Run `prisma migrate deploy` on release.
+- Set a real `AUTH_SECRET`.
+- Swap `saveUpload()` to a hosted image provider.
+
+## Out of scope (later subsystems)
+
+AI content generation, QR check-in / live event-day, WhatsApp Business API automation, organisation/teams, payments, meeting scheduler, seating, marketplace, native apps, Google Sheets ingestion.
