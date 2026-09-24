@@ -69,15 +69,24 @@ export function MinimalTemplate({ view }: { view: InvitationView }) {
         {sections.gallery && media.length > 0 && (
           <Block title="Gallery">
             <div className="grid grid-cols-2 gap-2">
-              {media.map((m) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={m.url}
-                  src={m.url}
-                  alt=""
-                  className="aspect-[4/3] w-full rounded object-cover"
-                />
-              ))}
+              {media.map((m) =>
+                m.type === "video" ? (
+                  <video
+                    key={m.url}
+                    src={m.url}
+                    controls
+                    className="aspect-[4/3] w-full rounded object-cover"
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={m.url}
+                    src={m.url}
+                    alt=""
+                    className="aspect-[4/3] w-full rounded object-cover"
+                  />
+                ),
+              )}
             </div>
           </Block>
         )}

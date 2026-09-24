@@ -68,6 +68,15 @@ export async function saveInvitationAction(
   }
 
   await updateInvitation(userId, eventId, parsed.data);
+
+  const intent = String(formData.get("intent") ?? "save");
+  if (intent === "publish") {
+    await publishInvitation(userId, eventId);
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/events/${eventId}/invitation`);
+    return { success: "Saved and published." };
+  }
+
   revalidatePath(`/events/${eventId}/invitation`);
   return { success: "Invitation saved." };
 }

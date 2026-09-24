@@ -21,7 +21,7 @@ export type InvitationView = {
   content: InvitationContent;
   sections: InvitationSections;
   functions: InvitationFunction[];
-  media: { url: string }[];
+  media: { url: string; type?: string }[];
   coverImageUrl?: string | null;
   guest?: { name: string; isVip: boolean } | null;
   rsvpUrl?: string | null;

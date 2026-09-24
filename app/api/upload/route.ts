@@ -17,13 +17,25 @@ export async function POST(request: NextRequest) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
-  if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "Only images are allowed" }, { status: 400 });
+  if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+    return NextResponse.json(
+      { error: "Only images and videos are allowed" },
+      { status: 400 },
+    );
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Image must be under 4 MB" }, { status: 400 });
+    return NextResponse.json(
+      { error: `File must be under ${MAX_BYTES / 1024 / 1024} MB` },
+      { status: 400 },
+    );
   }
 
-  const url = await saveUpload(file);
-  return NextResponse.json({ url });
+  try {
+    const url = await saveUpload(file);
+    return NextResponse.json({ url });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Upload failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

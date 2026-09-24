@@ -4,13 +4,15 @@ import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, Field } from "@/components/ui/Card";
 import { Input, Textarea } from "@/components/ui/Input";
-import { InvitationRenderer, type InvitationView } from "@/components/invitation-templates/InvitationRenderer";
-import type { InvitationContent, InvitationSections } from "@/lib/services/invitation";
 import {
-  publishInvitationAction,
-  saveInvitationAction,
-  type FormState,
-} from "./actions";
+  InvitationRenderer,
+  type InvitationView,
+} from "@/components/invitation-templates/InvitationRenderer";
+import type {
+  InvitationContent,
+  InvitationSections,
+} from "@/lib/services/invitation";
+import { saveInvitationAction, type FormState } from "./actions";
 
 const SECTION_LABELS: { key: keyof InvitationSections; label: string }[] = [
   { key: "welcome", label: "Welcome" },
@@ -27,6 +29,8 @@ const SECTION_LABELS: { key: keyof InvitationSections; label: string }[] = [
   { key: "giftRegistry", label: "Gift registry" },
   { key: "agenda", label: "Agenda" },
 ];
+
+type MediaItem = { url: string; type: string };
 
 export function InvitationEditor({
   eventId,
@@ -45,7 +49,7 @@ export function InvitationEditor({
     content: InvitationContent;
     sections: InvitationSections;
     coverImageUrl: string | null;
-    media: { url: string; type: string }[];
+    media: MediaItem[];
   };
   eventView: Omit<InvitationView, "content" | "sections" | "media" | "coverImageUrl">;
 }) {
@@ -58,33 +62,53 @@ export function InvitationEditor({
   const [content, setContent] = useState<InvitationContent>(initial.content);
   const [sections, setSections] = useState<InvitationSections>(initial.sections);
   const [coverImageUrl, setCoverImageUrl] = useState(initial.coverImageUrl);
-  const [media, setMedia] = useState(initial.media);
+  const [media, setMedia] = useState<MediaItem[]>(initial.media);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const setContentField = (key: keyof InvitationContent, value: string) =>
     setContent((prev) => ({ ...prev, [key]: value }));
 
-  async function uploadFile(file: File): Promise<string | null> {
+  async function uploadFile(file: File): Promise<string> {
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/upload", { method: "POST", body: fd });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { url: string };
+    const data = (await res.json().catch(() => ({}))) as {
+      url?: string;
+      error?: string;
+    };
+    if (!res.ok || !data.url) {
+      throw new Error(data.error ?? "Upload failed. Please try again.");
+    }
     return data.url;
   }
 
   async function onCoverChange(file: File) {
+    setUploadError(null);
     setUploading(true);
-    const url = await uploadFile(file);
-    if (url) setCoverImageUrl(url);
-    setUploading(false);
+    try {
+      setCoverImageUrl(await uploadFile(file));
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
   }
 
-  async function onGalleryChange(file: File) {
+  async function onGalleryChange(files: File[]) {
+    setUploadError(null);
     setUploading(true);
-    const url = await uploadFile(file);
-    if (url) setMedia((prev) => [...prev, { url, type: "image" }]);
-    setUploading(false);
+    try {
+      for (const file of files) {
+        const url = await uploadFile(file);
+        const type = file.type.startsWith("video/") ? "video" : "image";
+        setMedia((prev) => [...prev, { url, type }]);
+      }
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   const previewView: InvitationView = {
@@ -200,29 +224,62 @@ export function InvitationEditor({
                 className="block w-full text-sm"
               />
             </Field>
-            <Field label="Gallery">
+            {coverImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={coverImageUrl}
+                alt="Cover"
+                className="h-24 w-full rounded-lg object-cover"
+              />
+            )}
+
+            <Field label="Gallery (images and videos)">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*"
                 multiple
                 onChange={(e) => {
-                  Array.from(e.target.files ?? []).forEach((f) => onGalleryChange(f));
+                  onGalleryChange(Array.from(e.target.files ?? []));
+                  e.target.value = "";
                 }}
                 className="block w-full text-sm"
               />
             </Field>
+
             {uploading && <p className="text-xs text-slate-500">Uploading…</p>}
+            {uploadError && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                {uploadError}
+              </p>
+            )}
+
             {media.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {media.map((m, i) => (
-                  <button
-                    type="button"
-                    key={m.url}
-                    onClick={() => setMedia((prev) => prev.filter((_, idx) => idx !== i))}
-                    className="rounded border border-slate-200 p-1 text-xs text-red-600"
-                  >
-                    remove
-                  </button>
+              <div className="grid grid-cols-3 gap-2">
+                {media.map((m, index) => (
+                  <div key={m.url} className="relative">
+                    {m.type === "video" ? (
+                      <video
+                        src={m.url}
+                        className="aspect-square w-full rounded object-cover"
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={m.url}
+                        alt=""
+                        className="aspect-square w-full rounded object-cover"
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMedia((prev) => prev.filter((_, i) => i !== index))
+                      }
+                      className="absolute right-1 top-1 rounded bg-black/70 px-2 py-0.5 text-xs text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -239,29 +296,41 @@ export function InvitationEditor({
             </p>
           )}
 
-          <div className="flex items-center gap-3">
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : "Save invitation"}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="submit"
+              name="intent"
+              value="save"
+              variant="secondary"
+              disabled={pending || uploading}
+            >
+              {pending ? "Saving..." : "Save"}
             </Button>
+            <Button
+              type="submit"
+              name="intent"
+              value="publish"
+              disabled={pending || uploading}
+            >
+              {pending ? "Publishing..." : "Save & publish"}
+            </Button>
+            <span className="text-xs text-slate-500">
+              &ldquo;Save &amp; publish&rdquo; saves your changes and makes guest
+              links live.
+            </span>
           </div>
         </form>
 
         <Card>
-          <p className="text-sm font-semibold text-slate-900">Publish</p>
+          <p className="text-sm font-semibold text-slate-900">Status</p>
           <p className="mt-1 text-xs text-slate-500">
             {published
               ? "Published. Guests can open their personal links."
-              : "Not published yet. Publish to make guest links live."}
+              : "Not published yet. Use “Save & publish” above to make guest links live."}
           </p>
           <p className="mt-2 break-all text-xs text-slate-600">
             Guest link format: {origin}/e/{eventSlug}/&lt;guest-token&gt;
           </p>
-          <form action={publishInvitationAction} className="mt-3">
-            <input type="hidden" name="eventId" value={eventId} />
-            <Button type="submit" variant={published ? "secondary" : "primary"}>
-              {published ? "Re-publish" : "Publish invitation"}
-            </Button>
-          </form>
         </Card>
       </div>
 

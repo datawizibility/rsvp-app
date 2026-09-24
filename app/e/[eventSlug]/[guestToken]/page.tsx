@@ -74,7 +74,7 @@ export default async function PublicInvitationPage({
       venueName: fn.venueName,
       dressCode: fn.dressCode,
     })),
-    media: invitation?.media.map((m) => ({ url: m.url })) ?? [],
+    media: invitation?.media.map((m) => ({ url: m.url, type: m.type })) ?? [],
     coverImageUrl: invitation?.coverImageUrl ?? guest.event.coverImageUrl,
     guest: { name: guest.contact.name, isVip: guest.isVip },
     rsvpUrl,

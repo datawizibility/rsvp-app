@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { getEventForUser } from "@/lib/services/events";
+import { getEventDetail } from "@/lib/services/events";
 import { listEventGuests } from "@/lib/services/eventGuests";
 import { buildGuestCsv, type GuestExportRow } from "@/lib/services/export/guestCsv";
 
@@ -21,12 +21,13 @@ export async function GET(
 
   let event;
   try {
-    event = await getEventForUser(userId, eventId);
+    event = await getEventDetail(userId, eventId);
   } catch {
     return new NextResponse("Not found", { status: 404 });
   }
 
   const guests = await listEventGuests(userId, eventId);
+  const functionNames = event.functions.map((fn) => fn.name);
   const host = (await headers()).get("host") ?? "localhost:3000";
   const base = `http://${host}`;
 
@@ -46,16 +47,15 @@ export async function GET(
     dietaryPreference: guest.rsvp?.dietaryPreference ?? null,
     accommodation: guest.rsvp?.accommodationRequired ?? null,
     travel: guest.rsvp?.travelRequired ?? null,
-    functions: (guest.rsvp?.attendance ?? [])
+    functionsAttended: (guest.rsvp?.attendance ?? [])
       .filter((a) => a.attending)
-      .map((a) => a.eventFunction.name)
-      .join(", "),
+      .map((a) => a.eventFunction.name),
     opened: guest.firstOpenedAt !== null,
     openCount: guest.openCount,
     inviteLink: `${base}/e/${event.slug}/${guest.guestToken}`,
   }));
 
-  const csv = buildGuestCsv(rows);
+  const csv = buildGuestCsv(rows, functionNames);
 
   return new NextResponse(csv, {
     headers: {

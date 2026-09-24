@@ -14,13 +14,13 @@ export type GuestExportRow = {
   dietaryPreference?: string | null;
   accommodation?: boolean | null;
   travel?: boolean | null;
-  functions: string;
+  functionsAttended: string[];
   opened: boolean;
   openCount: number;
   inviteLink: string;
 };
 
-const HEADER = [
+const BASE_HEADER = [
   "Name",
   "Mobile",
   "Email",
@@ -36,11 +36,9 @@ const HEADER = [
   "Diet",
   "Accommodation",
   "Travel",
-  "Functions",
-  "Opened",
-  "Opens",
-  "Invite Link",
 ];
+
+const TAIL_HEADER = ["Opened", "Opens", "Invite Link"];
 
 function esc(value: string): string {
   if (/[",\n\r]/.test(value)) {
@@ -49,41 +47,49 @@ function esc(value: string): string {
   return value;
 }
 
+/** Force a value to be read as text by Excel/Sheets (prevents scientific notation). */
+function asText(value: string): string {
+  return `="${value.replace(/"/g, '""')}"`;
+}
+
 function bool(value: boolean | null | undefined): string {
   if (value === true) return "yes";
   if (value === false) return "no";
   return "";
 }
 
-export function buildGuestCsv(rows: GuestExportRow[]): string {
-  const lines = [HEADER.join(",")];
+export function buildGuestCsv(
+  rows: GuestExportRow[],
+  functionNames: string[],
+): string {
+  const header = [...BASE_HEADER, ...functionNames, ...TAIL_HEADER];
+  const lines = [header.map(esc).join(",")];
 
   for (const row of rows) {
-    lines.push(
-      [
-        row.name,
-        row.mobile,
-        row.email ?? "",
-        row.organisation ?? "",
-        row.designation ?? "",
-        row.city ?? "",
-        row.group ?? "",
-        bool(row.isVip),
-        String(row.partySize),
-        row.rsvpStatus,
-        String(row.adults),
-        String(row.children),
-        row.dietaryPreference ?? "",
-        bool(row.accommodation),
-        bool(row.travel),
-        row.functions,
-        bool(row.opened),
-        String(row.openCount),
-        row.inviteLink,
-      ]
-        .map(esc)
-        .join(","),
-    );
+    const cells = [
+      esc(row.name),
+      asText(row.mobile),
+      esc(row.email ?? ""),
+      esc(row.organisation ?? ""),
+      esc(row.designation ?? ""),
+      esc(row.city ?? ""),
+      esc(row.group ?? ""),
+      esc(bool(row.isVip)),
+      esc(String(row.partySize)),
+      esc(row.rsvpStatus),
+      esc(String(row.adults)),
+      esc(String(row.children)),
+      esc(row.dietaryPreference ?? ""),
+      esc(bool(row.accommodation)),
+      esc(bool(row.travel)),
+      ...functionNames.map((name) =>
+        esc(row.functionsAttended.includes(name) ? "yes" : "no"),
+      ),
+      esc(bool(row.opened)),
+      esc(String(row.openCount)),
+      esc(row.inviteLink),
+    ];
+    lines.push(cells.join(","));
   }
 
   return lines.join("\n") + "\n";

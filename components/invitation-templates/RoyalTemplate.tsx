@@ -78,15 +78,24 @@ export function RoyalTemplate({ view }: { view: InvitationView }) {
         {sections.gallery && media.length > 0 && (
           <Section title="Gallery">
             <div className="grid grid-cols-3 gap-2">
-              {media.map((m) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={m.url}
-                  src={m.url}
-                  alt=""
-                  className="aspect-square w-full rounded object-cover"
-                />
-              ))}
+              {media.map((m) =>
+                m.type === "video" ? (
+                  <video
+                    key={m.url}
+                    src={m.url}
+                    controls
+                    className="aspect-square w-full rounded object-cover"
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={m.url}
+                    src={m.url}
+                    alt=""
+                    className="aspect-square w-full rounded object-cover"
+                  />
+                ),
+              )}
             </div>
           </Section>
         )}
