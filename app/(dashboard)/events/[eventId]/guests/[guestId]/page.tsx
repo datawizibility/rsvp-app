@@ -3,9 +3,11 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { DeleteGuestButton } from "@/components/DeleteGuestButton";
 import { requireUserId } from "@/lib/session";
 import { getEventDetail } from "@/lib/services/events";
 import { getEventGuestDetail } from "@/lib/services/eventGuests";
+import { EditGuestForm } from "./EditGuestForm";
 
 export const dynamic = "force-dynamic";
 
@@ -53,9 +55,16 @@ export default async function GuestDetailPage({
               {guest.isVip ? "VIP" : "Standard"} · Party size {guest.partySize}
             </p>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-slate-700">
-            {guest.rsvp?.status ?? "no response"}
-          </span>
+          <div className="flex flex-col items-end gap-2">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-slate-700">
+              {guest.rsvp?.status ?? "no response"}
+            </span>
+            <DeleteGuestButton
+              eventId={eventId}
+              guestId={guestId}
+              guestName={guest.contact.name}
+            />
+          </div>
         </div>
 
         <div className="mt-4 rounded-lg bg-slate-50 p-3">
@@ -77,6 +86,25 @@ export default async function GuestDetailPage({
             </a>
           </div>
         </div>
+      </Card>
+
+      <Card>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900">Edit guest</h3>
+        <EditGuestForm
+          eventId={eventId}
+          guestId={guestId}
+          initial={{
+            name: guest.contact.name,
+            mobile: guest.contact.mobileNormalized,
+            email: guest.contact.email ?? "",
+            organisation: guest.contact.organisation ?? "",
+            designation: guest.contact.designation ?? "",
+            city: guest.contact.city ?? "",
+            groupName: guest.group?.name ?? "",
+            isVip: guest.isVip,
+            partySize: guest.partySize,
+          }}
+        />
       </Card>
 
       <Card>

@@ -4,8 +4,16 @@ import { requireUserId } from "@/lib/session";
 import { getEventDetail } from "@/lib/services/events";
 import { deleteFunctionAction } from "../actions";
 import { FunctionForm } from "./FunctionForm";
+import { EditFunctionForm } from "./EditFunctionForm";
 
 export const dynamic = "force-dynamic";
+
+function toDateInput(date: Date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
 
 export default async function FunctionsPage({
   params,
@@ -37,21 +45,47 @@ export default async function FunctionsPage({
             </li>
           )}
           {event.functions.map((fn) => (
-            <li key={fn.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <p className="font-medium text-slate-900">{fn.name}</p>
-                <p className="text-slate-500">
-                  {fn.date.toLocaleDateString()}
-                  {fn.startTime ? ` · ${fn.startTime}` : ""}
-                  {fn.venueName ? ` · ${fn.venueName}` : ""}
-                  {fn.dressCode ? ` · ${fn.dressCode}` : ""}
-                </p>
+            <li key={fn.id} className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium text-slate-900">{fn.name}</p>
+                  <p className="text-slate-500">
+                    {fn.date.toLocaleDateString()}
+                    {fn.startTime ? ` · ${fn.startTime}` : ""}
+                    {fn.venueName ? ` · ${fn.venueName}` : ""}
+                    {fn.dressCode ? ` · ${fn.dressCode}` : ""}
+                  </p>
+                </div>
+                <form action={deleteFunctionAction}>
+                  <input type="hidden" name="eventId" value={eventId} />
+                  <input type="hidden" name="functionId" value={fn.id} />
+                  <button className="text-xs text-red-600 underline">Delete</button>
+                </form>
               </div>
-              <form action={deleteFunctionAction}>
-                <input type="hidden" name="eventId" value={eventId} />
-                <input type="hidden" name="functionId" value={fn.id} />
-                <button className="text-xs text-red-600 underline">Delete</button>
-              </form>
+
+              <details className="mt-2">
+                <summary className="cursor-pointer text-xs text-slate-500">
+                  Edit
+                </summary>
+                <div className="mt-3 border-t border-slate-100 pt-3">
+                  <EditFunctionForm
+                    eventId={eventId}
+                    functionId={fn.id}
+                    initial={{
+                      name: fn.name,
+                      date: toDateInput(fn.date),
+                      startTime: fn.startTime ?? "",
+                      endTime: fn.endTime ?? "",
+                      venueName: fn.venueName ?? "",
+                      venueAddress: fn.venueAddress ?? "",
+                      description: fn.description ?? "",
+                      dressCode: fn.dressCode ?? "",
+                      capacity: fn.capacity != null ? String(fn.capacity) : "",
+                      rsvpRequired: fn.rsvpRequired,
+                    }}
+                  />
+                </div>
+              </details>
             </li>
           ))}
         </ul>

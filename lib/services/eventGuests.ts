@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
+import { NotFoundError, ValidationError } from "@/lib/errors";
 import { generateGuestToken } from "@/lib/utils/token";
+import { normalizeMobile } from "@/lib/utils/phone";
 import { upsertContact, type ContactInput } from "./contacts";
 import { getEventForUser } from "./events";
 
@@ -97,6 +99,89 @@ export async function getEventGuestByToken(eventSlug: string, guestToken: string
       },
     },
   });
+}
+
+export type UpdateGuestInput = {
+  name: string;
+  mobile: string;
+  email?: string | null;
+  organisation?: string | null;
+  designation?: string | null;
+  city?: string | null;
+  groupName?: string | null;
+  isVip?: boolean;
+  partySize?: number;
+};
+
+export async function updateEventGuest(
+  userId: string,
+  eventId: string,
+  guestId: string,
+  input: UpdateGuestInput,
+) {
+  const event = await getEventForUser(userId, eventId);
+
+  const guest = await prisma.eventGuest.findFirst({
+    where: { id: guestId, eventId },
+  });
+  if (!guest) throw new NotFoundError("Guest not found");
+
+  const mobileNormalized = normalizeMobile(input.mobile);
+  if (!mobileNormalized) {
+    throw new ValidationError("Invalid mobile number");
+  }
+
+  const clash = await prisma.contact.findFirst({
+    where: {
+      workspaceId: event.workspaceId,
+      mobileNormalized,
+      NOT: { id: guest.contactId },
+    },
+    select: { id: true },
+  });
+  if (clash) {
+    throw new ValidationError("Another guest already uses that mobile number");
+  }
+
+  let groupId = guest.groupId;
+  if (input.groupName !== undefined) {
+    groupId =
+      input.groupName && input.groupName.trim()
+        ? (await ensureGroup(eventId, input.groupName)).id
+        : null;
+  }
+
+  await prisma.$transaction([
+    prisma.contact.update({
+      where: { id: guest.contactId },
+      data: {
+        name: input.name,
+        mobile: input.mobile,
+        mobileNormalized,
+        email: input.email ?? null,
+        organisation: input.organisation ?? null,
+        designation: input.designation ?? null,
+        city: input.city ?? null,
+      },
+    }),
+    prisma.eventGuest.update({
+      where: { id: guestId },
+      data: {
+        groupId,
+        isVip: input.isVip ?? guest.isVip,
+        partySize: input.partySize ?? guest.partySize,
+      },
+    }),
+  ]);
+}
+
+export async function deleteEventGuest(
+  userId: string,
+  eventId: string,
+  guestId: string,
+) {
+  await getEventForUser(userId, eventId);
+  await prisma.eventGuest.deleteMany({ where: { id: guestId, eventId } });
 }
 
 export async function recordOpen(eventGuestId: string) {
