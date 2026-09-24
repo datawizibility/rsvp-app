@@ -4,7 +4,7 @@ import { saveUpload } from "@/lib/storage/media";
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 4 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Only images are allowed" }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Image must be under 5 MB" }, { status: 400 });
+    return NextResponse.json({ error: "Image must be under 4 MB" }, { status: 400 });
   }
 
   const url = await saveUpload(file);

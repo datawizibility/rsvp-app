@@ -88,13 +88,22 @@ docs/superpowers/            design spec + implementation plan
 
 ## Media uploads
 
-Cover/gallery images are written to `public/uploads` in development via `lib/storage/media.ts`. On Vercel the filesystem is ephemeral — swap `saveUpload()` for Cloudinary/UploadThing using the same signature. The upload endpoint already validates type and size (≤ 5 MB).
+`lib/storage/media.ts` writes to `public/uploads` in development, and to **Vercel Blob** in production when `BLOB_READ_WRITE_TOKEN` is set. Both paths return a public URL, so callers are unchanged. The upload endpoint validates type and size (≤ 4 MB).
 
-## Deploy notes
+## Deploy notes (free tier)
 
-- App → Vercel. DB → Neon (set `DATABASE_URL`). Run `prisma migrate deploy` on release.
-- Set a real `AUTH_SECRET`.
-- Swap `saveUpload()` to a hosted image provider.
+App → **Vercel** (Hobby), DB → **Neon**, images → **Vercel Blob**.
+
+1. **Database:** create a Neon project and copy the pooled connection string.
+2. **Push** the repo to GitHub, then import it in Vercel.
+3. **Env vars** in Vercel:
+   - `DATABASE_URL` — the Neon connection string (`?sslmode=require`)
+   - `AUTH_SECRET` — from `npx auth secret`
+   - `BLOB_READ_WRITE_TOKEN` — from Vercel → Storage → Blob (connect to the project)
+4. **Migrations** run automatically: the `vercel-build` script executes `prisma migrate deploy && next build`. `postinstall` runs `prisma generate`.
+5. Deploy → `https://<your-app>.vercel.app`.
+
+Note: Vercel's free Hobby tier is for non-commercial use.
 
 ## Out of scope (later subsystems)
 
