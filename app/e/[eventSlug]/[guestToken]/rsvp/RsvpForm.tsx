@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Card";
-import { Input, Textarea } from "@/components/ui/Input";
+import { Input, Select, Textarea } from "@/components/ui/Input";
 import { submitRsvpAction, type RsvpState } from "./actions";
 
 type FunctionOption = { id: string; name: string };
@@ -152,15 +152,42 @@ export function RsvpForm({
 
       {questions.length > 0 && (
         <div className="space-y-3">
-          {questions.map((q) => (
-            <Field key={q.id} label={q.label}>
-              <Textarea
-                name={`q_${q.id}`}
-                rows={2}
-                defaultValue={initial.answers[q.id] ?? ""}
-              />
-            </Field>
-          ))}
+          {questions.map((q) => {
+            const name = `q_${q.id}`;
+            const value = initial.answers[q.id] ?? "";
+            const options = Array.isArray(q.options)
+              ? (q.options as string[])
+              : [];
+
+            if (q.type === "select" && options.length > 0) {
+              return (
+                <Field key={q.id} label={q.label}>
+                  <Select name={name} defaultValue={value}>
+                    <option value="">Select…</option>
+                    {options.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              );
+            }
+
+            if (q.type === "textarea") {
+              return (
+                <Field key={q.id} label={q.label}>
+                  <Textarea name={name} rows={3} defaultValue={value} />
+                </Field>
+              );
+            }
+
+            return (
+              <Field key={q.id} label={q.label}>
+                <Input name={name} defaultValue={value} />
+              </Field>
+            );
+          })}
         </div>
       )}
 

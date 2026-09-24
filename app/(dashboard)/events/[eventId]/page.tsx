@@ -53,7 +53,7 @@ export default async function EventOverviewPage({
         </form>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link href={`/events/${eventId}/guests`}>
           <Card className="h-full transition hover:border-slate-400">
             <h3 className="font-semibold text-slate-900">Guests</h3>
@@ -68,6 +68,15 @@ export default async function EventOverviewPage({
             <p className="mt-1 text-sm text-slate-500">
               {event.functions.length} function
               {event.functions.length === 1 ? "" : "s"} scheduled.
+            </p>
+          </Card>
+        </Link>
+        <Link href={`/events/${eventId}/questions`}>
+          <Card className="h-full transition hover:border-slate-400">
+            <h3 className="font-semibold text-slate-900">RSVP questions</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {event.questions.length} custom question
+              {event.questions.length === 1 ? "" : "s"}.
             </p>
           </Card>
         </Link>

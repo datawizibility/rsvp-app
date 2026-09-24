@@ -15,6 +15,12 @@ import {
   updateEventGuest,
 } from "@/lib/services/eventGuests";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
+import {
+  createQuestion,
+  deleteQuestion,
+  updateQuestion,
+} from "@/lib/services/questions";
+import { parseOptionsText } from "@/lib/utils/options";
 import { eventStatusSchema, functionSchema, guestSchema } from "@/lib/validation/schemas";
 
 export type FormState = { error?: string; success?: string } | null;
@@ -219,4 +225,61 @@ export async function updateFunctionAction(
   revalidatePath(`/events/${eventId}/functions`);
   revalidatePath(`/events/${eventId}`);
   return { success: "Function updated." };
+}
+
+export async function createQuestionAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const userId = await requireUserId();
+  const eventId = String(formData.get("eventId"));
+  const label = field(formData, "label");
+  if (!label) return { error: "Please enter a question." };
+
+  try {
+    await createQuestion(userId, eventId, {
+      label,
+      type: field(formData, "type") ?? "text",
+      options: parseOptionsText(String(formData.get("options") ?? "")),
+    });
+  } catch (error) {
+    if (error instanceof ForbiddenError) return { error: error.message };
+    throw error;
+  }
+
+  revalidatePath(`/events/${eventId}/questions`);
+  return { success: "Question added." };
+}
+
+export async function updateQuestionAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const userId = await requireUserId();
+  const eventId = String(formData.get("eventId"));
+  const questionId = String(formData.get("questionId"));
+  const label = field(formData, "label");
+  if (!label) return { error: "Please enter a question." };
+
+  try {
+    await updateQuestion(userId, eventId, questionId, {
+      label,
+      type: field(formData, "type") ?? "text",
+      options: parseOptionsText(String(formData.get("options") ?? "")),
+    });
+  } catch (error) {
+    if (error instanceof ForbiddenError) return { error: error.message };
+    throw error;
+  }
+
+  revalidatePath(`/events/${eventId}/questions`);
+  return { success: "Question updated." };
+}
+
+export async function deleteQuestionAction(formData: FormData) {
+  const userId = await requireUserId();
+  const eventId = String(formData.get("eventId"));
+  const questionId = String(formData.get("questionId"));
+  await deleteQuestion(userId, eventId, questionId);
+  revalidatePath(`/events/${eventId}/questions`);
 }
