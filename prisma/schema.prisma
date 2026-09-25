@@ -97,6 +97,8 @@ model Event {
   slug          String          @unique
   publishedAt   DateTime?
   createdAt     DateTime        @default(now())
+  inviteTemplate   String?
+  reminderTemplate String?
   functions     EventFunction[]
   groups        GuestGroup[]
   eventGuests   EventGuest[]
@@ -151,6 +153,8 @@ model EventGuest {
   eventCustomFields Json?
   firstOpenedAt     DateTime?
   openCount         Int       @default(0)
+  lastInvitedAt     DateTime?
+  lastRemindedAt    DateTime?
   rsvp              Rsvp?
 
   @@unique([eventId, contactId])
