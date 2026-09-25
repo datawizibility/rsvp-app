@@ -1,13 +1,49 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { renderMessage } from "@/lib/messaging/templates";
-import { buildWhatsAppLink } from "@/lib/messaging/whatsapp";
+import {
+  buildWhatsAppLink,
+  buildWhatsAppWebLink,
+} from "@/lib/messaging/whatsapp";
 import { matchesFilter, type RecipientFilter } from "@/lib/services/recipientFilter";
 import type { Round } from "@/lib/services/messaging";
 import { markSentAction } from "./actions";
+
+type WhatsAppMode = "default" | "web";
+const MODE_STORAGE_KEY = "rsvp_whatsapp_mode";
+
+const modeListeners = new Set<() => void>();
+
+function subscribeMode(callback: () => void) {
+  modeListeners.add(callback);
+  return () => {
+    modeListeners.delete(callback);
+  };
+}
+
+function getModeSnapshot(): WhatsAppMode {
+  try {
+    return window.localStorage.getItem(MODE_STORAGE_KEY) === "web" ? "web" : "default";
+  } catch {
+    return "default";
+  }
+}
+
+function getModeServerSnapshot(): WhatsAppMode {
+  return "default";
+}
+
+function setStoredMode(next: WhatsAppMode) {
+  try {
+    window.localStorage.setItem(MODE_STORAGE_KEY, next);
+  } catch {
+    /* storage unavailable; in-memory only */
+  }
+  modeListeners.forEach((listener) => listener());
+}
 
 export type QueueGuest = {
   id: string;
@@ -51,6 +87,11 @@ export function SendQueue({
   const [filter, setFilter] = useState<RecipientFilter>("all");
   const [groupId, setGroupId] = useState<string>(groups[0]?.id ?? "");
   const [index, setIndex] = useState(0);
+  const mode = useSyncExternalStore(
+    subscribeMode,
+    getModeSnapshot,
+    getModeServerSnapshot,
+  );
 
   const list = useMemo(
     () =>
@@ -85,7 +126,7 @@ export function SendQueue({
   }
 
   const controls = (
-    <Card className="grid gap-3 sm:grid-cols-3">
+    <Card className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <label className="text-sm">
         <span className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
           Round
@@ -136,6 +177,19 @@ export function SendQueue({
           </select>
         </label>
       )}
+      <label className="text-sm">
+        <span className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
+          Open in
+        </span>
+        <select
+          value={mode}
+          onChange={(e) => setStoredMode(e.target.value as WhatsAppMode)}
+          className="w-full rounded-lg border border-slate-300 px-3 py-2"
+        >
+          <option value="default">WhatsApp app (default)</option>
+          <option value="web">WhatsApp Web (browser)</option>
+        </select>
+      </label>
     </Card>
   );
 
@@ -178,7 +232,10 @@ export function SendQueue({
     date: eventDate,
     link: current.link,
   });
-  const waLink = buildWhatsAppLink(current.mobileNormalized, message);
+  const waLink =
+    mode === "web"
+      ? buildWhatsAppWebLink(current.mobileNormalized, message)
+      : buildWhatsAppLink(current.mobileNormalized, message);
 
   async function openAndMark() {
     // Reuse a single named window so we don't spawn a new WhatsApp tab per guest.

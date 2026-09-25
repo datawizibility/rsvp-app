@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { renderMessage } from "@/lib/messaging/templates";
-import { buildWhatsAppLink } from "@/lib/messaging/whatsapp";
+import {
+  buildWhatsAppLink,
+  buildWhatsAppWebLink,
+} from "@/lib/messaging/whatsapp";
 
 const vars = {
   name: "Raj",
@@ -35,5 +38,19 @@ describe("buildWhatsAppLink", () => {
     expect(link).toBe(
       "https://wa.me/919800000001?text=Hi%20there%20%26%20welcome",
     );
+  });
+});
+
+describe("buildWhatsAppWebLink", () => {
+  it("builds a direct WhatsApp Web send link", () => {
+    const link = buildWhatsAppWebLink("+91 98000 00001", "Hi there & welcome");
+    expect(link).toBe(
+      "https://web.whatsapp.com/send?phone=919800000001&text=Hi%20there%20%26%20welcome",
+    );
+  });
+
+  it("strips formatting characters", () => {
+    const link = buildWhatsAppWebLink("91-98000-00001", "hi");
+    expect(link).toBe("https://web.whatsapp.com/send?phone=919800000001&text=hi");
   });
 });
