@@ -13,3 +13,15 @@ export function buildWhatsAppWebLink(mobileE164: string, message: string): strin
     message,
   )}`;
 }
+
+/**
+ * Hands the chat straight to the WhatsApp desktop app via the custom scheme,
+ * with no browser page or redirect in between. Requires the app to be installed.
+ */
+export function buildWhatsAppDesktopLink(
+  mobileE164: string,
+  message: string,
+): string {
+  const digits = mobileE164.replace(/\D/g, "");
+  return `whatsapp://send?phone=${digits}&text=${encodeURIComponent(message)}`;
+}

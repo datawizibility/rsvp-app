@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { renderMessage } from "@/lib/messaging/templates";
 import {
+  buildWhatsAppDesktopLink,
   buildWhatsAppLink,
   buildWhatsAppWebLink,
 } from "@/lib/messaging/whatsapp";
@@ -12,7 +13,7 @@ import { matchesFilter, type RecipientFilter } from "@/lib/services/recipientFil
 import type { Round } from "@/lib/services/messaging";
 import { markSentAction } from "./actions";
 
-type WhatsAppMode = "default" | "web";
+type WhatsAppMode = "default" | "desktop" | "web";
 const MODE_STORAGE_KEY = "rsvp_whatsapp_mode";
 
 const modeListeners = new Set<() => void>();
@@ -26,7 +27,8 @@ function subscribeMode(callback: () => void) {
 
 function getModeSnapshot(): WhatsAppMode {
   try {
-    return window.localStorage.getItem(MODE_STORAGE_KEY) === "web" ? "web" : "default";
+    const stored = window.localStorage.getItem(MODE_STORAGE_KEY);
+    return stored === "desktop" || stored === "web" ? stored : "default";
   } catch {
     return "default";
   }
@@ -187,6 +189,7 @@ export function SendQueue({
           className="w-full rounded-lg border border-slate-300 px-3 py-2"
         >
           <option value="default">WhatsApp app (default)</option>
+          <option value="desktop">WhatsApp Desktop — fastest</option>
           <option value="web">WhatsApp Web (browser)</option>
         </select>
       </label>
@@ -235,7 +238,9 @@ export function SendQueue({
   const waLink =
     mode === "web"
       ? buildWhatsAppWebLink(current.mobileNormalized, message)
-      : buildWhatsAppLink(current.mobileNormalized, message);
+      : mode === "desktop"
+        ? buildWhatsAppDesktopLink(current.mobileNormalized, message)
+        : buildWhatsAppLink(current.mobileNormalized, message);
 
   async function openAndMark() {
     // Reuse a single named window so we don't spawn a new WhatsApp tab per guest.

@@ -3,6 +3,7 @@ import { renderMessage } from "@/lib/messaging/templates";
 import {
   buildWhatsAppLink,
   buildWhatsAppWebLink,
+  buildWhatsAppDesktopLink,
 } from "@/lib/messaging/whatsapp";
 
 const vars = {
@@ -52,5 +53,14 @@ describe("buildWhatsAppWebLink", () => {
   it("strips formatting characters", () => {
     const link = buildWhatsAppWebLink("91-98000-00001", "hi");
     expect(link).toBe("https://web.whatsapp.com/send?phone=919800000001&text=hi");
+  });
+});
+
+describe("buildWhatsAppDesktopLink", () => {
+  it("builds a whatsapp:// deep link for the desktop app", () => {
+    const link = buildWhatsAppDesktopLink("+91 98000 00001", "Hi there & welcome");
+    expect(link).toBe(
+      "whatsapp://send?phone=919800000001&text=Hi%20there%20%26%20welcome",
+    );
   });
 });
