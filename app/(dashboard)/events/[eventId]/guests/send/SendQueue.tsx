@@ -181,7 +181,12 @@ export function SendQueue({
   const waLink = buildWhatsAppLink(current.mobileNormalized, message);
 
   async function openAndMark() {
-    window.open(waLink, "_blank", "noopener");
+    // Reuse a single named window so we don't spawn a new WhatsApp tab per guest.
+    window.open(
+      waLink,
+      "rsvp_whatsapp_sender",
+      "width=480,height=820,left=40,top=60",
+    );
     if (current) await markSentAction(eventId, current.id, round);
     setIndex((i) => i + 1);
   }
@@ -214,6 +219,11 @@ export function SendQueue({
             Skip
           </Button>
         </div>
+        <p className="mt-3 text-xs text-slate-400">
+          WhatsApp opens in a small window that is <strong>reused</strong> for every
+          guest — keep it open and just send, then click Open WhatsApp for the next
+          person here.
+        </p>
       </Card>
     </div>
   );
