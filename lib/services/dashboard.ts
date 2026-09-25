@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db";
 import { computeEventMetrics, type MetricGuest } from "./metrics";
 import { getEventForUser } from "./events";
-import { requireWorkspace } from "./workspaces";
 
 export async function getEventMetrics(userId: string, eventId: string) {
   await getEventForUser(userId, eventId);
@@ -50,13 +49,11 @@ export async function getEventMetrics(userId: string, eventId: string) {
 }
 
 export async function getWorkspaceSummary(userId: string) {
-  const workspace = await requireWorkspace(userId);
-
   const [events, contacts, confirmed] = await Promise.all([
-    prisma.event.count({ where: { workspaceId: workspace.id } }),
-    prisma.contact.count({ where: { workspaceId: workspace.id } }),
+    prisma.event.count({ where: { workspace: { ownerId: userId } } }),
+    prisma.contact.count({ where: { workspace: { ownerId: userId } } }),
     prisma.rsvp.count({
-      where: { event: { workspaceId: workspace.id }, status: "yes" },
+      where: { event: { workspace: { ownerId: userId } }, status: "yes" },
     }),
   ]);
 

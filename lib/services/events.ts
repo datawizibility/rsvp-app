@@ -17,9 +17,8 @@ export type EventInput = {
 };
 
 export async function listEventsForUser(userId: string) {
-  const workspace = await requireWorkspace(userId);
   return prisma.event.findMany({
-    where: { workspaceId: workspace.id },
+    where: { workspace: { ownerId: userId } },
     orderBy: { startDate: "asc" },
     include: { _count: { select: { eventGuests: true } } },
   });
@@ -39,18 +38,18 @@ export async function createEvent(userId: string, input: EventInput) {
 }
 
 export async function getEventForUser(userId: string, eventId: string) {
-  const workspace = await requireWorkspace(userId);
-  const event = await prisma.event.findUnique({ where: { id: eventId } });
-  if (!event || event.workspaceId !== workspace.id) {
+  const event = await prisma.event.findFirst({
+    where: { id: eventId, workspace: { ownerId: userId } },
+  });
+  if (!event) {
     throw new ForbiddenError("Event does not belong to this user");
   }
   return event;
 }
 
 export async function getEventDetail(userId: string, eventId: string) {
-  await getEventForUser(userId, eventId);
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
+  const event = await prisma.event.findFirst({
+    where: { id: eventId, workspace: { ownerId: userId } },
     include: {
       functions: { orderBy: { sortOrder: "asc" } },
       invitation: { include: { media: { orderBy: { sortOrder: "asc" } } } },
