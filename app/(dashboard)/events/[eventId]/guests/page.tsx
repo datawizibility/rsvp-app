@@ -31,7 +31,13 @@ export default async function GuestsPage({
             {guests.length} guest{guests.length === 1 ? "" : "s"} for {event.name}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/events/${eventId}/guests/send`}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+          >
+            Send invitations
+          </Link>
           <a
             href={`/events/${eventId}/guests/export`}
             className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50"
