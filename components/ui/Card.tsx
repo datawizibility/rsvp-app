@@ -1,14 +1,15 @@
-import type { ReactNode, LabelHTMLAttributes } from "react";
+import type { HTMLAttributes, ReactNode, LabelHTMLAttributes } from "react";
 
 export function Card({
   className = "",
   children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) {
+  ...props
+}: HTMLAttributes<HTMLDivElement> & { children?: ReactNode }) {
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
+    <div
+      className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );

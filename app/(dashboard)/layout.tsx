@@ -27,6 +27,7 @@ export default async function DashboardLayout({
           </Link>
           <Link
             href="/events/new"
+            data-tour="nav-new-event"
             className="block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100"
           >
             New event

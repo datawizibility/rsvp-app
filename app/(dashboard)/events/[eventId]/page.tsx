@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { PageTour } from "@/components/tour/PageTour";
 import { requireUserId } from "@/lib/session";
 import { getEventDetail } from "@/lib/services/events";
 import { getEventMetrics } from "@/lib/services/dashboard";
@@ -9,6 +10,34 @@ import { setEventStatusAction } from "./actions";
 export const dynamic = "force-dynamic";
 
 const STATUSES = ["draft", "published", "completed", "archived"];
+
+const EVENT_TOUR_STEPS = [
+  {
+    target: null,
+    title: "Your event workspace",
+    body: "Everything for this event lives here — guests, functions, invitation, RSVPs and the shared gallery. Here's the map.",
+  },
+  {
+    target: "module-cards",
+    title: "Five modules, one page",
+    body: "Guests (CSV import + WhatsApp sender), Functions, RSVP questions, the Invitation editor with live preview, and the moderated Guest gallery.",
+  },
+  {
+    target: "rsvp-overview",
+    title: "Live RSVP analytics",
+    body: "Invited → opened → responded → confirmed, with VIP tracking — refreshed the moment a guest acts.",
+  },
+  {
+    target: "attendance",
+    title: "Event-wise attendance",
+    body: "Exactly what your caterer and venue team need: who is attending which function, with headcounts.",
+  },
+  {
+    target: null,
+    title: "Ready to run your event 🎊",
+    body: "Guests RSVP from their personal links; you can record RSVPs for anyone who confirms over a call. The Tour button replays this anytime.",
+  },
+];
 
 export default async function EventOverviewPage({
   params,
@@ -53,7 +82,7 @@ export default async function EventOverviewPage({
         </form>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="module-cards">
         <Link href={`/events/${eventId}/guests`}>
           <Card className="h-full transition hover:border-slate-400">
             <h3 className="font-semibold text-slate-900">Guests</h3>
@@ -100,7 +129,7 @@ export default async function EventOverviewPage({
         </Link>
       </div>
 
-      <div>
+      <div data-tour="rsvp-overview">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">RSVP overview</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <MetricCard label="Invited" value={metrics.invited} />
@@ -129,7 +158,7 @@ export default async function EventOverviewPage({
       </div>
 
       {metrics.perFunctionByName.length > 0 && (
-        <Card>
+        <Card data-tour="attendance">
           <h3 className="mb-3 text-sm font-semibold text-slate-900">
             Attendance by function
           </h3>
@@ -187,6 +216,8 @@ export default async function EventOverviewPage({
           </ul>
         )}
       </Card>
+
+      <PageTour tourId={`event_${eventId}`} steps={EVENT_TOUR_STEPS} />
     </div>
   );
 }
