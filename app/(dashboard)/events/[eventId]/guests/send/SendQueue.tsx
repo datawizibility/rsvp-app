@@ -11,9 +11,10 @@ import {
 } from "@/lib/messaging/whatsapp";
 import { matchesFilter, type RecipientFilter } from "@/lib/services/recipientFilter";
 import type { Round } from "@/lib/services/messaging";
-import { markSentAction } from "./actions";
+import { markSentAction, sendWabaAction } from "./actions";
 
 type WhatsAppMode = "default" | "desktop" | "web";
+type Channel = "manual" | "api";
 const MODE_STORAGE_KEY = "rsvp_whatsapp_mode";
 
 const modeListeners = new Set<() => void>();
@@ -76,6 +77,7 @@ export function SendQueue({
   reminderTemplate,
   guests,
   groups,
+  wabaConfigured,
 }: {
   eventId: string;
   eventName: string;
@@ -84,11 +86,17 @@ export function SendQueue({
   reminderTemplate: string;
   guests: QueueGuest[];
   groups: { id: string; name: string }[];
+  wabaConfigured: boolean;
 }) {
   const [round, setRound] = useState<Round>("invite");
   const [filter, setFilter] = useState<RecipientFilter>("all");
   const [groupId, setGroupId] = useState<string>(groups[0]?.id ?? "");
   const [index, setIndex] = useState(0);
+  const [channel, setChannel] = useState<Channel>("manual");
+  const [apiState, setApiState] = useState<{ error?: string; success?: string } | null>(
+    null,
+  );
+  const [apiPending, setApiPending] = useState(false);
   const mode = useSyncExternalStore(
     subscribeMode,
     getModeSnapshot,
@@ -193,6 +201,25 @@ export function SendQueue({
           <option value="web">WhatsApp Web (browser)</option>
         </select>
       </label>
+      {wabaConfigured && (
+        <label className="text-sm">
+          <span className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
+            Channel
+          </span>
+          <select
+            value={channel}
+            onChange={(e) => {
+              setChannel(e.target.value as Channel);
+              setApiState(null);
+              setIndex(0);
+            }}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2"
+          >
+            <option value="manual">Manual (open WhatsApp)</option>
+            <option value="api">Business API (auto-send)</option>
+          </select>
+        </label>
+      )}
     </Card>
   );
 
@@ -253,6 +280,25 @@ export function SendQueue({
     setIndex((i) => i + 1);
   }
 
+  async function sendViaApi() {
+    if (!current) return;
+    setApiPending(true);
+    setApiState(null);
+    try {
+      const result = await sendWabaAction(eventId, current.id, round);
+      if (result?.error) {
+        setApiState({ error: result.error });
+      } else {
+        setApiState({ success: result?.success ?? "Sent." });
+        setIndex((i) => i + 1);
+      }
+    } finally {
+      setApiPending(false);
+    }
+  }
+
+  const isApi = wabaConfigured && channel === "api";
+
   return (
     <div className="space-y-4">
       {controls}
@@ -276,15 +322,38 @@ export function SendQueue({
         </pre>
 
         <div className="mt-4 flex items-center gap-3">
-          <Button onClick={openAndMark}>Open WhatsApp</Button>
-          <Button variant="secondary" onClick={() => setIndex((i) => i + 1)}>
-            Skip
-          </Button>
+          {isApi ? (
+            <>
+              <Button onClick={sendViaApi} disabled={apiPending}>
+                {apiPending ? "Sending..." : "Send via Business API"}
+              </Button>
+              <Button variant="secondary" onClick={() => setIndex((i) => i + 1)} disabled={apiPending}>
+                Skip
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={openAndMark}>Open WhatsApp</Button>
+              <Button variant="secondary" onClick={() => setIndex((i) => i + 1)}>
+                Skip
+              </Button>
+            </>
+          )}
         </div>
+        {isApi && apiState?.error && (
+          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {apiState.error}
+          </p>
+        )}
+        {isApi && apiState?.success && (
+          <p className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+            {apiState.success}
+          </p>
+        )}
         <p className="mt-3 text-xs text-slate-400">
-          WhatsApp opens in a small window that is <strong>reused</strong> for every
-          guest — keep it open and just send, then click Open WhatsApp for the next
-          person here.
+          {isApi
+            ? "Messages go out through the WhatsApp Business Cloud API using your approved template — no ban risk from automation."
+            : "WhatsApp opens in a small window that is reused for every guest — keep it open and just send, then click Open WhatsApp for the next person here."}
         </p>
       </Card>
     </div>

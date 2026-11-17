@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/session";
 import { getEventDetail } from "@/lib/services/events";
 import { getEventTemplates, listRecipients } from "@/lib/services/messaging";
+import { isWabaConfigured, wabaTemplateName } from "@/lib/messaging/waba";
 import { TemplateEditor } from "./TemplateEditor";
 import { SendQueue, type QueueGuest } from "./SendQueue";
 
@@ -63,6 +64,21 @@ export default async function SendPage({
         </p>
       </div>
 
+      {isWabaConfigured() ? (
+        <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
+          WhatsApp Business API is connected — approved templates{" "}
+          <strong>{wabaTemplateName("invite")}</strong> /{" "}
+          <strong>{wabaTemplateName("reminder")}</strong> can be sent automatically.
+        </div>
+      ) : (
+        <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Manual sending is active (safe for paced, personal sends). To send
+          through the official WhatsApp Business Cloud API instead, set{" "}
+          <code>WHATSAPP_BUSINESS_TOKEN</code>, <code>WHATSAPP_PHONE_NUMBER_ID</code>{" "}
+          and approved template names — see the README.
+        </div>
+      )}
+
       <TemplateEditor
         eventId={eventId}
         inviteTemplate={templates.inviteTemplate}
@@ -77,6 +93,7 @@ export default async function SendPage({
         reminderTemplate={templates.reminderTemplate}
         guests={guests}
         groups={event.groups.map((g) => ({ id: g.id, name: g.name }))}
+        wabaConfigured={isWabaConfigured()}
       />
     </div>
   );

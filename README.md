@@ -90,6 +90,18 @@ docs/superpowers/            design spec + implementation plan
 
 `lib/storage/media.ts` writes to `public/uploads` in development, and to **Vercel Blob** in production when `BLOB_READ_WRITE_TOKEN` is set. Both paths return a public URL, so callers are unchanged. The upload endpoint validates type and size (≤ 4 MB).
 
+## WhatsApp sending
+
+Two channels, selectable per bulk-send session on the **Send invitations** screen:
+
+1. **Manual (default, always available)** — opens each guest's chat in your own WhatsApp App/Web with the personalised message pre-filled; you press send. Because sends are human-paced from your number, this is safe for typical guest lists (hundreds). The app tracks `lastInvitedAt` / `lastRemindedAt` per guest so you can resume or re-remind.
+2. **WhatsApp Business Cloud API** — official, automation-safe channel (no ban risk). Requires a Meta WhatsApp Business account:
+   1. Create a Meta app with the *WhatsApp* product and add a business phone number.
+   2. Create message templates (e.g. `rsvp_invite`, `rsvp_reminder`) with a single body variable `{{1}}` and get them approved.
+   3. Generate a permanent access token and copy the phone number id.
+   4. Set `WHATSAPP_BUSINESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_TEMPLATE_INVITE`, `WHATSAPP_TEMPLATE_REMINDER` (see `.env.example`) in Vercel.
+   5. The Send screen then offers **Channel: Business API (auto-send)** — each send calls the Graph API with the rendered message as the template body and marks the round complete.
+
 ## Deploy notes (free tier)
 
 App → **Vercel** (Hobby), DB → **Neon**, images → **Vercel Blob**.
