@@ -22,6 +22,8 @@ export type InvitationView = {
   sections: InvitationSections;
   functions: InvitationFunction[];
   media: { url: string; type?: string }[];
+  guestMedia?: { url: string }[];
+  guestUpload?: { eventSlug: string; guestToken: string } | null;
   coverImageUrl?: string | null;
   guest?: { name: string; isVip: boolean } | null;
   rsvpUrl?: string | null;

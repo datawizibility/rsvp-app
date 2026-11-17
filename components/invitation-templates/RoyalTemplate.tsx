@@ -3,9 +3,10 @@ import {
   formatDayMonth,
   type InvitationView,
 } from "./types";
+import { GuestPhotoUploadBlock } from "./GuestPhotoUploadBlock";
 
 export function RoyalTemplate({ view }: { view: InvitationView }) {
-  const { content, sections, functions, media } = view;
+  const { content, sections, functions, media, guestMedia = [], guestUpload } = view;
 
   return (
     <div className="bg-[#1a0f0a] text-amber-50">
@@ -123,6 +124,33 @@ export function RoyalTemplate({ view }: { view: InvitationView }) {
           <Section title="A note from us">
             <p className="italic">{content.hostMessage}</p>
             {view.hostName && <p className="mt-2 text-sm">— {view.hostName}</p>}
+          </Section>
+        )}
+
+        {guestMedia.length > 0 && (
+          <Section title="Shared photos">
+            <div className="grid grid-cols-3 gap-2">
+              {guestMedia.map((m) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={m.url}
+                  src={m.url}
+                  alt="Shared by a guest"
+                  className="aspect-square w-full rounded object-cover"
+                />
+              ))}
+            </div>
+            {guestUpload && <GuestPhotoUploadBlock variant="royal" {...guestUpload} />}
+          </Section>
+        )}
+
+        {guestMedia.length === 0 && guestUpload && (
+          <Section title="Share your photos">
+            <p>
+              Captured a moment with us? Share it with the families — approved
+              photos appear here.
+            </p>
+            <GuestPhotoUploadBlock variant="royal" {...guestUpload} />
           </Section>
         )}
 

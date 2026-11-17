@@ -88,6 +88,16 @@ export default async function EventOverviewPage({
             </p>
           </Card>
         </Link>
+        <Link href={`/events/${eventId}/gallery`}>
+          <Card className="h-full transition hover:border-slate-400">
+            <h3 className="font-semibold text-slate-900">Guest gallery</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {event.galleryItems.length === 0
+                ? "No guest photos yet."
+                : `${event.galleryItems.filter((i) => !i.approved).length} awaiting approval.`}
+            </p>
+          </Card>
+        </Link>
       </div>
 
       <div>

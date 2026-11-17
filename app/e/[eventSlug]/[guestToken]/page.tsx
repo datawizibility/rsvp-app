@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { InvitationRenderer, type InvitationView } from "@/components/invitation-templates/InvitationRenderer";
 import { getEventGuestByToken, recordOpen, visibleFunctions } from "@/lib/services/eventGuests";
+import { listApprovedGallery } from "@/lib/services/gallery";
 import type { InvitationContent, InvitationSections } from "@/lib/services/invitation";
 
 export const dynamic = "force-dynamic";
@@ -84,6 +85,12 @@ export default async function PublicInvitationPage({
         dressCode: fn.dressCode,
       })),
     media: invitation?.media.map((m) => ({ url: m.url, type: m.type })) ?? [],
+    guestMedia: (await listApprovedGallery(guest.eventId)).map((item) => ({
+      url: item.url,
+    })),
+    guestUpload: invitation?.published
+      ? { eventSlug, guestToken }
+      : null,
     coverImageUrl: invitation?.coverImageUrl ?? guest.event.coverImageUrl,
     guest: { name: guest.contact.name, isVip: guest.isVip },
     rsvpUrl,

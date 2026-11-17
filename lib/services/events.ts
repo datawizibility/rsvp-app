@@ -55,6 +55,7 @@ export async function getEventDetail(userId: string, eventId: string) {
       invitation: { include: { media: { orderBy: { sortOrder: "asc" } } } },
       questions: { orderBy: { sortOrder: "asc" } },
       groups: true,
+      galleryItems: true,
     },
   });
   if (!event) throw new NotFoundError("Event not found");

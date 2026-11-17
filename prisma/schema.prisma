@@ -105,6 +105,7 @@ model Event {
   invitation    Invitation?
   questions     EventQuestion[]
   rsvps         Rsvp[]
+  galleryItems  GalleryItem[]
 
   @@index([workspaceId])
 }
@@ -158,6 +159,7 @@ model EventGuest {
   lastRemindedAt    DateTime?
   rsvp              Rsvp?
   functionInvites   FunctionInvite[]
+  galleryItems      GalleryItem[]
 
   @@unique([eventId, contactId])
   @@index([eventId])
@@ -196,6 +198,22 @@ model FunctionInvite {
 
   @@unique([eventFunctionId, eventGuestId])
   @@index([eventGuestId])
+}
+
+/// Photos guests upload from their personal invitation link. Items stay
+/// unapproved until the organiser approves them for the shared gallery.
+model GalleryItem {
+  id           String      @id @default(cuid())
+  eventId      String
+  event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventGuestId String?
+  eventGuest   EventGuest? @relation(fields: [eventGuestId], references: [id], onDelete: SetNull)
+  url          String
+  type         String      @default("image")
+  approved     Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+
+  @@index([eventId])
 }
 
 model Rsvp {
