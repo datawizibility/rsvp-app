@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { requireUserId } from "@/lib/session";
-import { getEventDetail } from "@/lib/services/events";
 import {
   deleteGalleryItem,
   listGalleryForOrganizer,
@@ -39,7 +37,6 @@ export default async function GalleryPage({
 }) {
   const { eventId } = await params;
   const userId = await requireUserId();
-  const event = await getEventDetail(userId, eventId);
   const items = await listGalleryForOrganizer(userId, eventId);
 
   const pending = items.filter((item) => !item.approved);
