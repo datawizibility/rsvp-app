@@ -80,6 +80,17 @@ export const rsvpSchema = z.object({
     .optional(),
 });
 
+export const manualRsvpSchema = z.object({
+  status: z.enum(["yes", "maybe", "no"]),
+  adultCount: z.coerce.number().int().min(0).max(50),
+  childCount: z.coerce.number().int().min(0).max(50),
+  functions: z.array(z.string()),
+  accommodationRequired: z.coerce.boolean().optional(),
+  travelRequired: z.coerce.boolean().optional(),
+  dietaryPreference: z.enum(["veg", "nonveg", "jain", "other"]).optional(),
+  message: z.string().trim().max(1000).optional(),
+});
+
 export const invitationSchema = z.object({
   templateKey: z.enum(["royal", "minimal"]),
   content: z.object({

@@ -1,5 +1,7 @@
 import type { DietaryPreference, RsvpStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { NotFoundError } from "@/lib/errors";
+import { getEventForUser } from "./events";
 
 export type RsvpInput = {
   status: RsvpStatus;
@@ -19,9 +21,49 @@ export async function submitRsvp(eventGuestId: string, input: RsvpInput) {
     select: { eventId: true },
   });
 
+  return applyRsvp(guest.eventId, eventGuestId, input);
+}
+
+/**
+ * Planner-side RSVP entry ("they confirmed over a call"). Same stored shape as
+ * a guest RSVP, but ownership is enforced here, not just in the UI.
+ */
+export async function recordManualRsvp(
+  userId: string,
+  eventId: string,
+  guestId: string,
+  input: Omit<RsvpInput, "answers">,
+) {
+  await getEventForUser(userId, eventId);
+
+  const guest = await prisma.eventGuest.findFirst({
+    where: { id: guestId, eventId },
+    select: { id: true, eventId: true },
+  });
+  if (!guest) throw new NotFoundError("Guest not found");
+
+  return applyRsvp(guest.eventId, guest.id, input);
+}
+
+export async function applyRsvp(
+  eventId: string,
+  eventGuestId: string,
+  input: RsvpInput,
+) {
+  // Only attendance for functions that actually belong to this event survives.
+  const validFunctions = new Set(
+    (
+      await prisma.eventFunction.findMany({
+        where: { eventId },
+        select: { id: true },
+      })
+    ).map((fn) => fn.id),
+  );
+  const allowedFunctions = input.functions.filter((id) => validFunctions.has(id));
+
   const normalized: RsvpInput =
     input.status === "yes"
-      ? input
+      ? { ...input, functions: allowedFunctions }
       : { ...input, adultCount: 0, childCount: 0, functions: [] };
 
   const data = {
@@ -39,7 +81,7 @@ export async function submitRsvp(eventGuestId: string, input: RsvpInput) {
     const rsvp = await tx.rsvp.upsert({
       where: { eventGuestId },
       update: data,
-      create: { ...data, eventGuestId, eventId: guest.eventId },
+      create: { ...data, eventGuestId, eventId },
     });
 
     await tx.rsvpAttendance.deleteMany({ where: { rsvpId: rsvp.id } });

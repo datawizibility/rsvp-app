@@ -21,7 +21,8 @@ import {
   updateQuestion,
 } from "@/lib/services/questions";
 import { parseOptionsText } from "@/lib/utils/options";
-import { eventStatusSchema, functionSchema, guestSchema } from "@/lib/validation/schemas";
+import { eventStatusSchema, functionSchema, guestSchema, manualRsvpSchema } from "@/lib/validation/schemas";
+import { recordManualRsvp } from "@/lib/services/rsvp";
 
 export type FormState = { error?: string; success?: string } | null;
 
@@ -180,6 +181,47 @@ export async function updateGuestAction(
   revalidatePath(`/events/${eventId}/guests`);
   revalidatePath(`/events/${eventId}/guests/${guestId}`);
   return { success: "Guest updated." };
+}
+
+export async function recordManualRsvpAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const userId = await requireUserId();
+  const eventId = String(formData.get("eventId"));
+  const guestId = String(formData.get("guestId"));
+
+  const parsed = manualRsvpSchema.safeParse({
+    status: field(formData, "status") ?? "",
+    adultCount: field(formData, "adultCount") ?? 0,
+    childCount: field(formData, "childCount") ?? 0,
+    functions: formData.getAll("functions").map(String),
+    accommodationRequired: formData.get("accommodationRequired") === "on",
+    travelRequired: formData.get("travelRequired") === "on",
+    dietaryPreference: field(formData, "dietaryPreference"),
+    message: field(formData, "message"),
+  });
+  if (!parsed.success) {
+    return { error: "Please choose a status and valid headcounts." };
+  }
+
+  try {
+    await recordManualRsvp(userId, eventId, guestId, parsed.data);
+  } catch (error) {
+    if (
+      error instanceof ValidationError ||
+      error instanceof ForbiddenError ||
+      error instanceof NotFoundError
+    ) {
+      return { error: error.message };
+    }
+    throw error;
+  }
+
+  revalidatePath(`/events/${eventId}/guests/${guestId}`);
+  revalidatePath(`/events/${eventId}/guests`);
+  revalidatePath(`/events/${eventId}`);
+  return { success: "RSVP saved (recorded by organiser)." };
 }
 
 export async function deleteGuestAction(formData: FormData) {

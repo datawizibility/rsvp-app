@@ -8,6 +8,7 @@ import { requireUserId } from "@/lib/session";
 import { getEventDetail } from "@/lib/services/events";
 import { getEventGuestDetail } from "@/lib/services/eventGuests";
 import { EditGuestForm } from "./EditGuestForm";
+import { ManualRsvpForm } from "./ManualRsvpForm";
 
 export const dynamic = "force-dynamic";
 
@@ -133,10 +134,53 @@ export default async function GuestDetailPage({
                 {attendingFunctions.length > 0 ? attendingFunctions.join(", ") : "—"}
               </dd>
             </div>
+            {guest.rsvp.message && (
+              <div className="sm:col-span-3">
+                <dt className="text-slate-500">Note</dt>
+                <dd className="font-medium text-slate-900">{guest.rsvp.message}</dd>
+              </div>
+            )}
           </dl>
         ) : (
           <p className="text-sm text-slate-400">No response yet.</p>
         )}
+
+        <div className="mt-5 border-t border-slate-100 pt-5">
+          <h4 className="mb-3 text-sm font-semibold text-slate-900">
+            {guest.rsvp
+              ? "Update on behalf of guest"
+              : "Record RSVP on behalf of guest"}
+          </h4>
+          <p className="mb-3 text-xs text-slate-500">
+            For confirmations received over a phone call or in person.
+          </p>
+          <ManualRsvpForm
+            eventId={eventId}
+            guestId={guestId}
+            functions={event.functions.map((fn) => ({
+              id: fn.id,
+              name: fn.name,
+              date: fn.date.toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+              }),
+            }))}
+            initial={{
+              status: guest.rsvp?.status ?? null,
+              adultCount: guest.rsvp?.adultCount ?? guest.partySize,
+              childCount: guest.rsvp?.childCount ?? 0,
+              attendingFunctionIds:
+                guest.rsvp?.attendance
+                  .filter((a) => a.attending)
+                  .map((a) => a.eventFunctionId) ?? [],
+              dietaryPreference: guest.rsvp?.dietaryPreference ?? null,
+              accommodationRequired: guest.rsvp?.accommodationRequired ?? false,
+              travelRequired: guest.rsvp?.travelRequired ?? false,
+              message: guest.rsvp?.message ?? "",
+            }}
+            hasRsvp={Boolean(guest.rsvp)}
+          />
+        </div>
       </Card>
     </div>
   );

@@ -11,13 +11,35 @@ export const dynamic = "force-dynamic";
 
 export default async function GuestsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ filter?: string }>;
 }) {
   const { eventId } = await params;
+  const { filter } = await searchParams;
   const userId = await requireUserId();
   const event = await getEventDetail(userId, eventId);
-  const guests = await listEventGuests(userId, eventId);
+  const allGuests = await listEventGuests(userId, eventId);
+
+  const filters = [
+    { key: "all", label: "All" },
+    { key: "pending", label: "Pending" },
+    { key: "yes", label: "Confirmed" },
+    { key: "maybe", label: "Maybe" },
+    { key: "no", label: "Declined" },
+  ] as const;
+  const active = filters.some((f) => f.key === filter) ? filter! : "all";
+  const guests =
+    active === "all"
+      ? allGuests
+      : allGuests.filter(
+          (g) =>
+            active === "pending"
+              ? g.rsvp === null
+              : g.rsvp?.status === active,
+        );
+  const pendingCount = allGuests.filter((g) => g.rsvp === null).length;
 
   const host = (await headers()).get("host") ?? "localhost:3000";
   const base = `http://${host}`;
@@ -29,6 +51,7 @@ export default async function GuestsPage({
           <h2 className="text-xl font-semibold text-slate-900">Guests</h2>
           <p className="text-sm text-slate-500">
             {guests.length} guest{guests.length === 1 ? "" : "s"} for {event.name}
+            {active !== "all" ? ` (of ${allGuests.length})` : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -63,6 +86,23 @@ export default async function GuestsPage({
         <h3 className="mb-3 text-sm font-semibold text-slate-900">Add a guest</h3>
         <AddGuestForm eventId={eventId} />
       </Card>
+
+      <div className="flex flex-wrap gap-2">
+        {filters.map((f) => (
+          <Link
+            key={f.key}
+            href={`/events/${eventId}/guests${f.key === "all" ? "" : `?filter=${f.key}`}`}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              active === f.key
+                ? "bg-slate-900 text-white"
+                : "bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+            }`}
+          >
+            {f.label}
+            {f.key === "pending" && pendingCount > 0 ? ` (${pendingCount})` : ""}
+          </Link>
+        ))}
+      </div>
 
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-left text-sm">
