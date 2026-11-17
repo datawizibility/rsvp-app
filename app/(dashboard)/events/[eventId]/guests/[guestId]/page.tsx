@@ -6,8 +6,9 @@ import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { DeleteGuestButton } from "@/components/DeleteGuestButton";
 import { requireUserId } from "@/lib/session";
 import { getEventDetail } from "@/lib/services/events";
-import { getEventGuestDetail } from "@/lib/services/eventGuests";
+import { getEventGuestDetail, visibleFunctions } from "@/lib/services/eventGuests";
 import { EditGuestForm } from "./EditGuestForm";
+import { FunctionInvitesForm } from "./FunctionInvitesForm";
 import { ManualRsvpForm } from "./ManualRsvpForm";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,18 @@ export default async function GuestDetailPage({
       date.getDate(),
     )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
+
+  const invitedFunctionIds = guest.functionInvites.map((i) => i.eventFunctionId);
+  // The organiser records attendance only for functions this guest was invited to.
+  const offeredFunctionIds = new Set(
+    visibleFunctions({
+      functionIds: event.functions.map((fn) => fn.id),
+      invitedFunctionIds,
+    }),
+  );
+  const offeredToGuest = event.functions.filter((fn) =>
+    offeredFunctionIds.has(fn.id),
+  );
 
   return (
     <div className="space-y-6">
@@ -121,6 +134,28 @@ export default async function GuestDetailPage({
             isVip: guest.isVip,
             partySize: guest.partySize,
           }}
+        />
+      </Card>
+
+      <Card>
+        <h3 className="mb-1 text-sm font-semibold text-slate-900">
+          Invited functions
+        </h3>
+        <p className="mb-3 text-xs text-slate-500">
+          Leave everything unchecked to invite this guest to all functions.
+        </p>
+        <FunctionInvitesForm
+          eventId={eventId}
+          guestId={guestId}
+          functions={event.functions.map((fn) => ({
+            id: fn.id,
+            name: fn.name,
+            date: fn.date.toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+            }),
+          }))}
+          invitedFunctionIds={invitedFunctionIds}
         />
       </Card>
 
@@ -236,7 +271,7 @@ export default async function GuestDetailPage({
           <ManualRsvpForm
             eventId={eventId}
             guestId={guestId}
-            functions={event.functions.map((fn) => ({
+            functions={offeredToGuest.map((fn) => ({
               id: fn.id,
               name: fn.name,
               date: fn.date.toLocaleDateString("en-IN", {

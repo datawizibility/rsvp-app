@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/Card";
-import { getEventGuestByToken } from "@/lib/services/eventGuests";
+import { getEventGuestByToken, visibleFunctions } from "@/lib/services/eventGuests";
 import { RsvpForm } from "./RsvpForm";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,16 @@ export default async function RsvpPage({
     answers[answer.questionId] = answer.answer;
   }
 
+  const visibleFunctionIds = new Set(
+    visibleFunctions({
+      functionIds: guest.event.functions.map((fn) => fn.id),
+      invitedFunctionIds: guest.functionInvites.map((i) => i.eventFunctionId),
+    }),
+  );
+  const offeredFunctions = guest.event.functions.filter((fn) =>
+    visibleFunctionIds.has(fn.id),
+  );
+
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
       <Link
@@ -39,7 +49,7 @@ export default async function RsvpPage({
             eventSlug={eventSlug}
             guestToken={guestToken}
             guestName={guest.contact.name}
-            functions={guest.event.functions.map((fn) => ({ id: fn.id, name: fn.name }))}
+            functions={offeredFunctions.map((fn) => ({ id: fn.id, name: fn.name }))}
             questions={guest.event.questions.map((q) => ({
               id: q.id,
               label: q.label,

@@ -76,6 +76,7 @@ export async function getEventGuestDetail(
     include: {
       contact: true,
       group: true,
+      functionInvites: { include: { eventFunction: true } },
       rsvp: {
         include: { attendance: { include: { eventFunction: true } }, answers: true },
       },
@@ -89,6 +90,7 @@ export async function getEventGuestByToken(eventSlug: string, guestToken: string
     include: {
       contact: true,
       group: true,
+      functionInvites: { include: { eventFunction: true } },
       rsvp: { include: { attendance: true, answers: true } },
       event: {
         include: {
@@ -182,6 +184,61 @@ export async function deleteEventGuest(
 ) {
   await getEventForUser(userId, eventId);
   await prisma.eventGuest.deleteMany({ where: { id: guestId, eventId } });
+}
+
+export type GuestVisibleFunctionsOptions = {
+  functionIds: string[];
+  invitedFunctionIds: string[] | null;
+};
+
+/**
+ * Functions a guest may see and RSVP to. A guest with no invite rows is
+ * invited to every function; with rows, only the invited subset.
+ */
+export function visibleFunctions({
+  functionIds,
+  invitedFunctionIds,
+}: GuestVisibleFunctionsOptions): string[] {
+  if (!invitedFunctionIds || invitedFunctionIds.length === 0) return functionIds;
+  const invited = new Set(invitedFunctionIds);
+  return functionIds.filter((id) => invited.has(id));
+}
+
+/** Replace the set of functions a guest is invited to. */
+export async function setGuestFunctionInvites(
+  userId: string,
+  eventId: string,
+  guestId: string,
+  functionIds: string[],
+) {
+  await getEventForUser(userId, eventId);
+
+  const guest = await prisma.eventGuest.findFirst({
+    where: { id: guestId, eventId },
+    select: { id: true },
+  });
+  if (!guest) throw new NotFoundError("Guest not found");
+
+  const eventFunctions = await prisma.eventFunction.findMany({
+    where: { eventId },
+    select: { id: true },
+  });
+  const valid = new Set(eventFunctions.map((fn) => fn.id));
+  const uniqueIds = [...new Set(functionIds)].filter((id) => valid.has(id));
+
+  await prisma.$transaction([
+    prisma.functionInvite.deleteMany({ where: { eventGuestId: guestId } }),
+    ...(uniqueIds.length > 0
+      ? [
+          prisma.functionInvite.createMany({
+            data: uniqueIds.map((eventFunctionId) => ({
+              eventGuestId: guestId,
+              eventFunctionId,
+            })),
+          }),
+        ]
+      : []),
+  ]);
 }
 
 export async function recordOpen(eventGuestId: string) {

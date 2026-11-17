@@ -125,6 +125,7 @@ model EventFunction {
   rsvpRequired Boolean          @default(true)
   sortOrder    Int              @default(0)
   attendance   RsvpAttendance[]
+  invites      FunctionInvite[]
 
   @@index([eventId])
 }
@@ -156,6 +157,7 @@ model EventGuest {
   lastInvitedAt     DateTime?
   lastRemindedAt    DateTime?
   rsvp              Rsvp?
+  functionInvites   FunctionInvite[]
 
   @@unique([eventId, contactId])
   @@index([eventId])
@@ -181,6 +183,19 @@ model InvitationMedia {
   url          String
   type         String     @default("image")
   sortOrder    Int        @default(0)
+}
+
+/// Which functions a specific guest is invited to. Guests with no rows here
+/// are invited to every function (backwards-compatible default).
+model FunctionInvite {
+  id              String        @id @default(cuid())
+  eventFunctionId String
+  eventFunction   EventFunction @relation(fields: [eventFunctionId], references: [id], onDelete: Cascade)
+  eventGuestId    String
+  eventGuest      EventGuest    @relation(fields: [eventGuestId], references: [id], onDelete: Cascade)
+
+  @@unique([eventFunctionId, eventGuestId])
+  @@index([eventGuestId])
 }
 
 model Rsvp {

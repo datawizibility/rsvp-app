@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { InvitationRenderer, type InvitationView } from "@/components/invitation-templates/InvitationRenderer";
-import { getEventGuestByToken, recordOpen } from "@/lib/services/eventGuests";
+import { getEventGuestByToken, recordOpen, visibleFunctions } from "@/lib/services/eventGuests";
 import type { InvitationContent, InvitationSections } from "@/lib/services/invitation";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +55,13 @@ export default async function PublicInvitationPage({
   const host = (await headers()).get("host") ?? "localhost:3000";
   const rsvpUrl = `http://${host}/e/${eventSlug}/${guestToken}/rsvp`;
 
+  const invitedIds = guest.functionInvites.map((i) => i.eventFunctionId);
+  const visibleFunctionIds = visibleFunctions({
+    functionIds: guest.event.functions.map((fn) => fn.id),
+    invitedFunctionIds: invitedIds,
+  });
+  const invitedSet = new Set(visibleFunctionIds);
+
   const view: InvitationView = {
     eventName: guest.event.name,
     eventType: guest.event.type,
@@ -66,14 +73,16 @@ export default async function PublicInvitationPage({
     contactNumber: guest.event.contactNumber,
     content,
     sections,
-    functions: guest.event.functions.map((fn) => ({
-      id: fn.id,
-      name: fn.name,
-      date: fn.date,
-      startTime: fn.startTime,
-      venueName: fn.venueName,
-      dressCode: fn.dressCode,
-    })),
+    functions: guest.event.functions
+      .filter((fn) => invitedSet.has(fn.id))
+      .map((fn) => ({
+        id: fn.id,
+        name: fn.name,
+        date: fn.date,
+        startTime: fn.startTime,
+        venueName: fn.venueName,
+        dressCode: fn.dressCode,
+      })),
     media: invitation?.media.map((m) => ({ url: m.url, type: m.type })) ?? [],
     coverImageUrl: invitation?.coverImageUrl ?? guest.event.coverImageUrl,
     guest: { name: guest.contact.name, isVip: guest.isVip },

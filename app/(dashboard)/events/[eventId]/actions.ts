@@ -12,6 +12,7 @@ import {
 import {
   addEventGuest,
   deleteEventGuest,
+  setGuestFunctionInvites,
   updateEventGuest,
 } from "@/lib/services/eventGuests";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
@@ -229,6 +230,17 @@ export async function recordManualRsvpAction(
   revalidatePath(`/events/${eventId}/guests`);
   revalidatePath(`/events/${eventId}`);
   return { success: "RSVP saved (recorded by organiser)." };
+}
+
+export async function updateGuestInvitesAction(formData: FormData) {
+  const userId = await requireUserId();
+  const eventId = String(formData.get("eventId"));
+  const guestId = String(formData.get("guestId"));
+  const functionIds = formData.getAll("invitedFunctions").map(String);
+
+  await setGuestFunctionInvites(userId, eventId, guestId, functionIds);
+  revalidatePath(`/events/${eventId}/guests/${guestId}`);
+  revalidatePath(`/events/${eventId}/guests`);
 }
 
 export async function deleteGuestAction(formData: FormData) {

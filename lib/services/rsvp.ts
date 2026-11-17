@@ -64,16 +64,25 @@ export async function applyRsvp(
   eventGuestId: string,
   input: RsvpInput,
 ) {
-  // Only attendance for functions that actually belong to this event survives.
-  const validFunctions = new Set(
-    (
-      await prisma.eventFunction.findMany({
-        where: { eventId },
-        select: { id: true },
-      })
-    ).map((fn) => fn.id),
+  // Only attendance for functions that actually belong to this event survives…
+  const eventFunctions = await prisma.eventFunction.findMany({
+    where: { eventId },
+    select: { id: true },
+  });
+  const validFunctions = new Set(eventFunctions.map((fn) => fn.id));
+
+  // …and when the guest has function-level invitations, only invited ones.
+  const invitedIds = (
+    await prisma.functionInvite.findMany({
+      where: { eventGuestId },
+      select: { eventFunctionId: true },
+    })
+  ).map((row) => row.eventFunctionId);
+  const invitedSet = invitedIds.length > 0 ? new Set(invitedIds) : null;
+
+  const allowedFunctions = input.functions.filter(
+    (id) => validFunctions.has(id) && (!invitedSet || invitedSet.has(id)),
   );
-  const allowedFunctions = input.functions.filter((id) => validFunctions.has(id));
 
   const normalized: RsvpInput =
     input.status === "yes"
