@@ -47,6 +47,14 @@ export async function GET(
     dietaryPreference: guest.rsvp?.dietaryPreference ?? null,
     accommodation: guest.rsvp?.accommodationRequired ?? null,
     travel: guest.rsvp?.travelRequired ?? null,
+    travelArrival: guest.rsvp?.travelArrival ?? null,
+    travelDeparture: guest.rsvp?.travelDeparture ?? null,
+    travelFlightNumber: guest.rsvp?.travelFlightNumber ?? null,
+    travelTravellers: guest.rsvp?.travelTravellers ?? null,
+    travelPickup: guest.rsvp?.travelPickup ?? null,
+    travelDrop: guest.rsvp?.travelDrop ?? null,
+    travelTicketUrl: guest.rsvp?.travelTicketUrl ?? null,
+    travelNotes: guest.rsvp?.travelNotes ?? null,
     functionsAttended: (guest.rsvp?.attendance ?? [])
       .filter((a) => a.attending)
       .map((a) => a.eventFunction.name),

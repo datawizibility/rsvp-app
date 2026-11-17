@@ -27,6 +27,13 @@ export function ManualRsvpForm({
     accommodationRequired: boolean;
     travelRequired: boolean;
     message: string;
+    travelArrival: string | null;
+    travelDeparture: string | null;
+    travelFlightNumber: string | null;
+    travelTravellers: number | null;
+    travelPickup: boolean;
+    travelDrop: boolean;
+    travelNotes: string;
   };
   hasRsvp: boolean;
 }) {
@@ -115,6 +122,56 @@ export function ManualRsvpForm({
       <div className="sm:col-span-2">
         <Field label="Note (e.g. confirmed over call on 14 Nov)">
           <Input name="message" defaultValue={initial.message} />
+        </Field>
+      </div>
+
+      <div className="sm:col-span-2 space-y-3 rounded-xl bg-slate-50 p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          Travel details
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Arrival date &amp; time">
+            <Input
+              name="travelArrival"
+              type="datetime-local"
+              defaultValue={initial.travelArrival ?? ""}
+            />
+          </Field>
+          <Field label="Departure date &amp; time">
+            <Input
+              name="travelDeparture"
+              type="datetime-local"
+              defaultValue={initial.travelDeparture ?? ""}
+            />
+          </Field>
+          <Field label="Flight / train number">
+            <Input name="travelFlightNumber" defaultValue={initial.travelFlightNumber ?? ""} />
+          </Field>
+          <Field label="Number of people travelling">
+            <Input
+              name="travelTravellers"
+              type="number"
+              min={0}
+              defaultValue={initial.travelTravellers ?? ""}
+            />
+          </Field>
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="travelPickup"
+              defaultChecked={initial.travelPickup}
+            />{" "}
+            Needs pickup
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="travelDrop" defaultChecked={initial.travelDrop} />{" "}
+            Needs drop back
+          </label>
+        </div>
+        <Field label="Travel notes">
+          <Input name="travelNotes" defaultValue={initial.travelNotes} />
         </Field>
       </div>
 

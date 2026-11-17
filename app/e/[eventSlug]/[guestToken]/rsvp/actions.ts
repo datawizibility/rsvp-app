@@ -4,9 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEventGuestByToken } from "@/lib/services/eventGuests";
 import { submitRsvp } from "@/lib/services/rsvp";
+import { saveUpload } from "@/lib/storage/media";
 import { rsvpSchema } from "@/lib/validation/schemas";
 
 export type RsvpState = { error?: string } | null;
+
+const MAX_TICKET_BYTES = 4 * 1024 * 1024;
 
 const buckets = new Map<string, { count: number; reset: number }>();
 
@@ -54,11 +57,35 @@ export async function submitRsvpAction(
     travelRequired: formData.get("travelRequired") === "on" ? true : undefined,
     dietaryPreference: formData.get("dietaryPreference") || undefined,
     message: formData.get("message") ? String(formData.get("message")) : undefined,
+    travelArrival: formData.get("travelArrival") || undefined,
+    travelDeparture: formData.get("travelDeparture") || undefined,
+    travelFlightNumber: formData.get("travelFlightNumber") || undefined,
+    travelTravellers: formData.get("travelTravellers") || undefined,
+    travelPickup: formData.get("travelPickup") === "on" ? true : undefined,
+    travelDrop: formData.get("travelDrop") === "on" ? true : undefined,
+    travelNotes: formData.get("travelNotes") ? String(formData.get("travelNotes")) : undefined,
     answers,
   });
 
   if (!parsed.success) return { error: "Please check your response." };
 
-  await submitRsvp(guest.id, parsed.data);
+  // Optional travel-ticket upload rides inside this same action's FormData.
+  let travelTicketUrl: string | undefined;
+  const ticket = formData.get("ticket");
+  if (ticket instanceof File && ticket.size > 0) {
+    const allowed =
+      ticket.type === "application/pdf" || ticket.type.startsWith("image/");
+    if (!allowed) return { error: "Tickets must be an image or PDF." };
+    if (ticket.size > MAX_TICKET_BYTES) {
+      return { error: "Ticket file must be under 4 MB." };
+    }
+    try {
+      travelTicketUrl = await saveUpload(ticket);
+    } catch {
+      return { error: "Ticket upload failed. Please try again." };
+    }
+  }
+
+  await submitRsvp(guest.id, { ...parsed.data, travelTicketUrl });
   redirect(`/e/${eventSlug}/${guestToken}?submitted=1`);
 }

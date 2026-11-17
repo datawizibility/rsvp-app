@@ -13,7 +13,21 @@ export type RsvpInput = {
   dietaryPreference?: DietaryPreference;
   message?: string;
   answers?: { questionId: string; answer: string }[];
+  travelArrival?: string | null;
+  travelDeparture?: string | null;
+  travelFlightNumber?: string | null;
+  travelTravellers?: number | null;
+  travelPickup?: boolean | null;
+  travelDrop?: boolean | null;
+  travelTicketUrl?: string | null;
+  travelNotes?: string | null;
 };
+
+function toDate(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 export async function submitRsvp(eventGuestId: string, input: RsvpInput) {
   const guest = await prisma.eventGuest.findUniqueOrThrow({
@@ -64,7 +78,19 @@ export async function applyRsvp(
   const normalized: RsvpInput =
     input.status === "yes"
       ? { ...input, functions: allowedFunctions }
-      : { ...input, adultCount: 0, childCount: 0, functions: [] };
+      : {
+          ...input,
+          adultCount: 0,
+          childCount: 0,
+          functions: [],
+          travelArrival: null,
+          travelDeparture: null,
+          travelFlightNumber: null,
+          travelTravellers: null,
+          travelPickup: null,
+          travelDrop: null,
+          travelNotes: null,
+        };
 
   const data = {
     status: normalized.status,
@@ -75,13 +101,32 @@ export async function applyRsvp(
     dietaryPreference: normalized.dietaryPreference ?? null,
     message: normalized.message ?? null,
     respondedAt: new Date(),
+    travelArrival: toDate(normalized.travelArrival),
+    travelDeparture: toDate(normalized.travelDeparture),
+    travelFlightNumber: normalized.travelFlightNumber ?? null,
+    travelTravellers: normalized.travelTravellers ?? null,
+    travelPickup: normalized.travelPickup ?? null,
+    travelDrop: normalized.travelDrop ?? null,
+    travelNotes: normalized.travelNotes ?? null,
   };
 
   return prisma.$transaction(async (tx) => {
     const rsvp = await tx.rsvp.upsert({
       where: { eventGuestId },
-      update: data,
-      create: { ...data, eventGuestId, eventId },
+      update: {
+        ...data,
+        // A new ticket upload replaces the stored URL; when no file was sent
+        // this submit, the previously uploaded ticket is preserved.
+        ...(normalized.travelTicketUrl !== undefined
+          ? { travelTicketUrl: normalized.travelTicketUrl }
+          : {}),
+      },
+      create: {
+        ...data,
+        eventGuestId,
+        eventId,
+        travelTicketUrl: normalized.travelTicketUrl ?? null,
+      },
     });
 
     await tx.rsvpAttendance.deleteMany({ where: { rsvpId: rsvp.id } });

@@ -199,6 +199,14 @@ model Rsvp {
   respondedAt           DateTime          @default(now())
   attendance            RsvpAttendance[]
   answers               RsvpAnswer[]
+  travelArrival         DateTime?
+  travelDeparture       DateTime?
+  travelFlightNumber    String?
+  travelTravellers      Int?
+  travelPickup          Boolean?
+  travelDrop            Boolean?
+  travelTicketUrl       String?
+  travelNotes           String?
 
   @@index([eventId])
 }

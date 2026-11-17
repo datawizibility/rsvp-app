@@ -34,6 +34,22 @@ export default async function GuestDetailPage({
       .filter((a) => a.attending)
       .map((a) => a.eventFunction.name) ?? [];
 
+  const fmt = (date: Date | null) =>
+    date?.toLocaleString("en-IN", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }) ?? null;
+  const toLocalInput = (date: Date | null) => {
+    if (!date) return null;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate(),
+    )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
   return (
     <div className="space-y-6">
       <Link href={`/events/${eventId}/guests`} className="text-sm text-slate-500 underline">
@@ -140,6 +156,69 @@ export default async function GuestDetailPage({
                 <dd className="font-medium text-slate-900">{guest.rsvp.message}</dd>
               </div>
             )}
+            {(guest.rsvp.travelArrival ||
+              guest.rsvp.travelDeparture ||
+              guest.rsvp.travelFlightNumber ||
+              guest.rsvp.travelPickup ||
+              guest.rsvp.travelDrop) && (
+              <>
+                <div>
+                  <dt className="text-slate-500">Arrival</dt>
+                  <dd className="font-medium text-slate-900">
+                    {fmt(guest.rsvp.travelArrival) ?? "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Departure</dt>
+                  <dd className="font-medium text-slate-900">
+                    {fmt(guest.rsvp.travelDeparture) ?? "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Flight / train</dt>
+                  <dd className="font-medium text-slate-900">
+                    {guest.rsvp.travelFlightNumber ?? "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Travelling</dt>
+                  <dd className="font-medium text-slate-900">
+                    {guest.rsvp.travelTravellers ?? "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Pickup / drop</dt>
+                  <dd className="font-medium text-slate-900">
+                    {[guest.rsvp.travelPickup ? "pickup" : null, guest.rsvp.travelDrop ? "drop" : null]
+                      .filter(Boolean)
+                      .join(" + ") || "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Ticket</dt>
+                  <dd className="font-medium text-slate-900">
+                    {guest.rsvp.travelTicketUrl ? (
+                      <a
+                        href={guest.rsvp.travelTicketUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline"
+                      >
+                        View file
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </dd>
+                </div>
+                {guest.rsvp.travelNotes && (
+                  <div className="sm:col-span-3">
+                    <dt className="text-slate-500">Travel notes</dt>
+                    <dd className="font-medium text-slate-900">{guest.rsvp.travelNotes}</dd>
+                  </div>
+                )}
+              </>
+            )}
           </dl>
         ) : (
           <p className="text-sm text-slate-400">No response yet.</p>
@@ -177,6 +256,13 @@ export default async function GuestDetailPage({
               accommodationRequired: guest.rsvp?.accommodationRequired ?? false,
               travelRequired: guest.rsvp?.travelRequired ?? false,
               message: guest.rsvp?.message ?? "",
+              travelArrival: toLocalInput(guest.rsvp?.travelArrival ?? null),
+              travelDeparture: toLocalInput(guest.rsvp?.travelDeparture ?? null),
+              travelFlightNumber: guest.rsvp?.travelFlightNumber ?? "",
+              travelTravellers: guest.rsvp?.travelTravellers ?? null,
+              travelPickup: guest.rsvp?.travelPickup ?? false,
+              travelDrop: guest.rsvp?.travelDrop ?? false,
+              travelNotes: guest.rsvp?.travelNotes ?? "",
             }}
             hasRsvp={Boolean(guest.rsvp)}
           />

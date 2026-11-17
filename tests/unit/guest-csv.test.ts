@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { buildGuestCsv, type GuestExportRow } from "@/lib/services/export/guestCsv";
 
 const BASE =
-  "Name,Mobile,Email,Organisation,Designation,City,Group,VIP,Party Size,RSVP,Adults,Children,Diet,Accommodation,Travel";
+  "Name,Mobile,Email,Organisation,Designation,City,Group,VIP,Party Size,RSVP,Adults,Children,Diet,Accommodation,Travel,Arrival,Departure,Flight/Train,Travellers,Pickup,Drop,Ticket,Travel Notes";
 
 const row = (over: Partial<GuestExportRow> = {}): GuestExportRow => ({
   name: "Rahul Sharma",
@@ -20,6 +20,14 @@ const row = (over: Partial<GuestExportRow> = {}): GuestExportRow => ({
   dietaryPreference: "veg",
   accommodation: false,
   travel: false,
+  travelArrival: null,
+  travelDeparture: null,
+  travelFlightNumber: null,
+  travelTravellers: null,
+  travelPickup: null,
+  travelDrop: null,
+  travelTicketUrl: null,
+  travelNotes: null,
   functionsAttended: ["Sangeet", "Wedding"],
   opened: true,
   openCount: 3,
@@ -28,7 +36,7 @@ const row = (over: Partial<GuestExportRow> = {}): GuestExportRow => ({
 });
 
 describe("buildGuestCsv", () => {
-  it("puts one column per function between Travel and Opened", () => {
+  it("puts one column per function between Travel Notes and Opened", () => {
     const csv = buildGuestCsv([], ["Mehendi", "Sangeet", "Wedding", "Reception"]);
     expect(csv.split("\n")[0]).toBe(
       `${BASE},Mehendi,Sangeet,Wedding,Reception,Opened,Opens,Invite Link`,
@@ -41,8 +49,30 @@ describe("buildGuestCsv", () => {
       "Sangeet",
     ]);
     const cells = csv.split("\n")[1].split(",");
-    expect(cells[15]).toBe("no"); // Mehendi
-    expect(cells[16]).toBe("yes"); // Sangeet
+    expect(cells[23]).toBe("no"); // Mehendi
+    expect(cells[24]).toBe("yes"); // Sangeet
+  });
+
+  it("writes travel details including the ticket link", () => {
+    const csv = buildGuestCsv(
+      [
+        row({
+          travel: true,
+          travelArrival: new Date("2026-12-10T08:30"),
+          travelFlightNumber: "6E 234",
+          travelTravellers: 3,
+          travelPickup: true,
+          travelDrop: false,
+          travelTicketUrl: "https://blob.example.com/ticket.pdf",
+          travelNotes: "NSCBI airport",
+        }),
+      ],
+      [],
+    );
+    const body = csv.split("\n")[1];
+    // Arrival renders with a comma, so it is quoted — assert by content.
+    expect(body).toContain('"10 Dec, 08:30 am"');
+    expect(body).toContain(',6E 234,3,yes,no,https://blob.example.com/ticket.pdf,NSCBI airport');
   });
 
   it("writes phone numbers as text so Excel does not use scientific notation", () => {

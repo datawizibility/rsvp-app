@@ -14,6 +14,14 @@ export type GuestExportRow = {
   dietaryPreference?: string | null;
   accommodation?: boolean | null;
   travel?: boolean | null;
+  travelArrival?: Date | null;
+  travelDeparture?: Date | null;
+  travelFlightNumber?: string | null;
+  travelTravellers?: number | null;
+  travelPickup?: boolean | null;
+  travelDrop?: boolean | null;
+  travelTicketUrl?: string | null;
+  travelNotes?: string | null;
   functionsAttended: string[];
   opened: boolean;
   openCount: number;
@@ -36,6 +44,14 @@ const BASE_HEADER = [
   "Diet",
   "Accommodation",
   "Travel",
+  "Arrival",
+  "Departure",
+  "Flight/Train",
+  "Travellers",
+  "Pickup",
+  "Drop",
+  "Ticket",
+  "Travel Notes",
 ];
 
 const TAIL_HEADER = ["Opened", "Opens", "Invite Link"];
@@ -82,6 +98,30 @@ export function buildGuestCsv(
       esc(row.dietaryPreference ?? ""),
       esc(bool(row.accommodation)),
       esc(bool(row.travel)),
+      esc(
+        row.travelArrival?.toLocaleString("en-IN", {
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }) ?? "",
+      ),
+      esc(
+        row.travelDeparture?.toLocaleString("en-IN", {
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }) ?? "",
+      ),
+      esc(row.travelFlightNumber ?? ""),
+      esc(row.travelTravellers != null ? String(row.travelTravellers) : ""),
+      esc(bool(row.travelPickup)),
+      esc(bool(row.travelDrop)),
+      esc(row.travelTicketUrl ?? ""),
+      esc(row.travelNotes ?? ""),
       ...functionNames.map((name) =>
         esc(row.functionsAttended.includes(name) ? "yes" : "no"),
       ),

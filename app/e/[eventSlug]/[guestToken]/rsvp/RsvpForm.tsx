@@ -32,6 +32,14 @@ export function RsvpForm({
     travelRequired: boolean | null;
     message: string | null;
     answers: Record<string, string>;
+    travelArrival: string | null;
+    travelDeparture: string | null;
+    travelFlightNumber: string | null;
+    travelTravellers: number | null;
+    travelPickup: boolean | null;
+    travelDrop: boolean | null;
+    travelTicketUrl: string | null;
+    travelNotes: string | null;
   };
 }) {
   const [state, formAction, pending] = useActionState<RsvpState, FormData>(
@@ -39,6 +47,16 @@ export function RsvpForm({
     null,
   );
   const [status, setStatus] = useState(initial.status ?? "yes");
+
+  const toLocalInput = (iso: string | null) => {
+    if (!iso) return "";
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate(),
+    )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
 
   return (
     <form action={formAction} className="space-y-6">
@@ -146,6 +164,87 @@ export function RsvpForm({
                 Travel assistance
               </label>
             </div>
+          </div>
+
+          <div className="space-y-3 rounded-xl bg-slate-50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Travel details
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Arrival date &amp; time">
+                <Input
+                  name="travelArrival"
+                  type="datetime-local"
+                  defaultValue={toLocalInput(initial.travelArrival)}
+                />
+              </Field>
+              <Field label="Departure date &amp; time">
+                <Input
+                  name="travelDeparture"
+                  type="datetime-local"
+                  defaultValue={toLocalInput(initial.travelDeparture)}
+                />
+              </Field>
+              <Field label="Flight / train number">
+                <Input
+                  name="travelFlightNumber"
+                  defaultValue={initial.travelFlightNumber ?? ""}
+                  placeholder="e.g. 6E 234 / 12301 Howrah Exp"
+                />
+              </Field>
+              <Field label="Number of people travelling">
+                <Input
+                  name="travelTravellers"
+                  type="number"
+                  min={0}
+                  defaultValue={initial.travelTravellers ?? ""}
+                />
+              </Field>
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="travelPickup"
+                  defaultChecked={initial.travelPickup ?? false}
+                />
+                Need airport/station pickup
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="travelDrop"
+                  defaultChecked={initial.travelDrop ?? false}
+                />
+                Need drop back
+              </label>
+            </div>
+            <Field label="Ticket / boarding pass (image or PDF, up to 4 MB)">
+              <input
+                type="file"
+                name="ticket"
+                accept="application/pdf,image/*"
+                className="w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white"
+              />
+              {initial.travelTicketUrl && (
+                <a
+                  href={initial.travelTicketUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-block text-xs text-slate-600 underline"
+                >
+                  View previously uploaded ticket
+                </a>
+              )}
+            </Field>
+            <Field label="Travel notes (optional)">
+              <Textarea
+                name="travelNotes"
+                rows={2}
+                defaultValue={initial.travelNotes ?? ""}
+                placeholder="Arrival airport, train name, special requests…"
+              />
+            </Field>
           </div>
         </>
       )}

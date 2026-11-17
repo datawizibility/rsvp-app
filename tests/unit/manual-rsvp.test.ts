@@ -159,6 +159,41 @@ run("manual RSVP recording (organiser override)", () => {
     expect(attendance.map((a) => a.eventFunctionId)).toEqual([functionAId]);
   });
 
+  it("stores travel details and clears them when the guest declines", async () => {
+    const rsvp = await rsvpService.recordManualRsvp(userId, eventId, guestId, {
+      status: "yes",
+      adultCount: 2,
+      childCount: 0,
+      functions: [],
+      travelRequired: true,
+      travelArrival: "2026-12-10T08:30",
+      travelDeparture: "2026-12-12T20:00",
+      travelFlightNumber: "6E 234",
+      travelTravellers: 3,
+      travelPickup: true,
+      travelDrop: true,
+      travelNotes: "Arriving at NSCBI airport",
+    });
+
+    expect(rsvp.travelArrival).toBeInstanceOf(Date);
+    expect(rsvp.travelFlightNumber).toBe("6E 234");
+    expect(rsvp.travelTravellers).toBe(3);
+    expect(rsvp.travelPickup).toBe(true);
+    expect(rsvp.travelDrop).toBe(true);
+
+    const declined = await rsvpService.recordManualRsvp(userId, eventId, guestId, {
+      status: "no",
+      adultCount: 2,
+      childCount: 0,
+      functions: [],
+      travelArrival: "2026-12-10T08:30",
+    });
+
+    expect(declined.travelArrival).toBeNull();
+    expect(declined.travelFlightNumber).toBeNull();
+    expect(declined.travelPickup).toBeNull();
+  });
+
   it("rejects a guest from another organiser's event", async () => {
     await expect(
       rsvpService.recordManualRsvp(userId, eventId, otherEventGuestId, {

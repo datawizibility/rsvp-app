@@ -200,6 +200,13 @@ export async function recordManualRsvpAction(
     travelRequired: formData.get("travelRequired") === "on",
     dietaryPreference: field(formData, "dietaryPreference"),
     message: field(formData, "message"),
+    travelArrival: field(formData, "travelArrival") ?? undefined,
+    travelDeparture: field(formData, "travelDeparture") ?? undefined,
+    travelFlightNumber: field(formData, "travelFlightNumber") ?? undefined,
+    travelTravellers: field(formData, "travelTravellers") ?? undefined,
+    travelPickup: formData.get("travelPickup") === "on",
+    travelDrop: formData.get("travelDrop") === "on",
+    travelNotes: field(formData, "travelNotes") ?? undefined,
   });
   if (!parsed.success) {
     return { error: "Please choose a status and valid headcounts." };

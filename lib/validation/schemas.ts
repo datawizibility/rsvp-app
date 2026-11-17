@@ -75,6 +75,13 @@ export const rsvpSchema = z.object({
   travelRequired: z.coerce.boolean().optional(),
   dietaryPreference: z.enum(["veg", "nonveg", "jain", "other"]).optional(),
   message: z.string().trim().max(1000).optional(),
+  travelArrival: z.string().trim().max(40).optional(),
+  travelDeparture: z.string().trim().max(40).optional(),
+  travelFlightNumber: z.string().trim().max(60).optional(),
+  travelTravellers: z.coerce.number().int().min(0).max(50).optional(),
+  travelPickup: z.coerce.boolean().optional(),
+  travelDrop: z.coerce.boolean().optional(),
+  travelNotes: z.string().trim().max(500).optional(),
   answers: z
     .array(z.object({ questionId: z.string(), answer: z.string().trim().max(1000) }))
     .optional(),
@@ -89,6 +96,13 @@ export const manualRsvpSchema = z.object({
   travelRequired: z.coerce.boolean().optional(),
   dietaryPreference: z.enum(["veg", "nonveg", "jain", "other"]).optional(),
   message: z.string().trim().max(1000).optional(),
+  travelArrival: z.string().trim().max(40).optional(),
+  travelDeparture: z.string().trim().max(40).optional(),
+  travelFlightNumber: z.string().trim().max(60).optional(),
+  travelTravellers: z.coerce.number().int().min(0).max(50).optional(),
+  travelPickup: z.coerce.boolean().optional(),
+  travelDrop: z.coerce.boolean().optional(),
+  travelNotes: z.string().trim().max(500).optional(),
 });
 
 export const invitationSchema = z.object({

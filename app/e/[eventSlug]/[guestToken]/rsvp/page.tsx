@@ -56,6 +56,14 @@ export default async function RsvpPage({
               travelRequired: guest.rsvp?.travelRequired ?? null,
               message: guest.rsvp?.message ?? null,
               answers,
+              travelArrival: guest.rsvp?.travelArrival?.toISOString() ?? null,
+              travelDeparture: guest.rsvp?.travelDeparture?.toISOString() ?? null,
+              travelFlightNumber: guest.rsvp?.travelFlightNumber ?? null,
+              travelTravellers: guest.rsvp?.travelTravellers ?? null,
+              travelPickup: guest.rsvp?.travelPickup ?? null,
+              travelDrop: guest.rsvp?.travelDrop ?? null,
+              travelTicketUrl: guest.rsvp?.travelTicketUrl ?? null,
+              travelNotes: guest.rsvp?.travelNotes ?? null,
             }}
           />
         </div>
